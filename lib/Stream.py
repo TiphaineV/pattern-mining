@@ -195,6 +195,7 @@ class Stream:
         for u, t, ev_type, label in self.degrees[v]:
             if b >= t and ev_type == 1:
                 return set(label)
+        return set()
     
     def substream(self, W1, W2):
         # W1: [(u, b,e), (v, b',e'), etc.]
@@ -217,8 +218,8 @@ class Stream:
     def neighbours(self, node):
         return set([ x[0] for x in self.degrees[node] ])
     
-    def interior(self, X1, X2,  patterns=(set(), set())):
-        stsa = StreamStarSat(self, threshold=3)
+    def interior(self, X1, X2,  patterns=(set(), set()), threshold=3):
+        stsa = StreamStarSat(self, threshold)
         S1 = []
         S2 = []
 
@@ -249,8 +250,15 @@ class Stream:
             left = [set()]
         if right == []:
             right = [set()]
-        return set.intersection(*left), set.intersection(*right)
-    
+        try:
+            return set.intersection(*left), set.intersection(*right)
+        except Exception as e:
+            print(e)
+            print(left)
+            print("--------")
+            print(right)
+            sys.exit()
+            
     def _ext(self, left, right):
         """
             Returns the extent (support set) of a pattern
@@ -262,9 +270,8 @@ class Stream:
         """
             Returns the candidates for extension
         """
-        
-        candidates_left = [(x, 0) for x in I[0].difference(q[0]) ]
-        candidates_right = [(x, 1) for x in I[1].difference(q[1]) ]
+        candidates_left = [(x, 0) for x in set(I[0]).difference(q[0]) ]
+        candidates_right = [(x, 1) for x in set(I[1]).difference(q[1]) ]
         
         return set(candidates_left + candidates_right)
     
@@ -272,8 +279,8 @@ class Stream:
         """
             Enumerates all bipatterns
         """
-        S = self.interior(_top, _bot, (set(), set()))
-        print(S[1])
+        S = self.interior(_top, _bot, (set(), set()), threshold=30)
+        print(len(S[1]))
         self.enum(self._int([self.label(x) for x in S[0]], [self.label(x) for x in S[1]]), S, set())
         
     def _add(self, item, q, side=0):
