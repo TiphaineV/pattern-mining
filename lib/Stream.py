@@ -78,6 +78,8 @@ class StreamStarSat(StreamProperty):
         result = []
 
         for x in s.neighbours(u):
+            # Find neighbours x of u that are stars
+            stars = []
             times = s.degrees[x]
             sorted_times = sorted(times, key=itemgetter(1))
 
@@ -86,6 +88,7 @@ class StreamStarSat(StreamProperty):
             prop_was_true = False
 
             for v, t, ev_type, label in sorted_times:
+                # Determine when x is star
                 prop_is_true = False
                 if ev_type == 1:
                     deg += 1
@@ -99,9 +102,20 @@ class StreamStarSat(StreamProperty):
                     prop_was_true = True
 
                 if not prop_is_true and prop_was_true:
-                    result.append((u, prop_true_t, t))
-                    prop_was_true = False
+                    stars.append((x, prop_true_t, t))
                     
+                    prop_was_true = False
+        
+        for v, b_st, e_st in stars:
+            times = s.times[frozenset([u, v])]
+            for x in times:
+                b, e = x[0], x[1]
+                inter_res = s.intersect((b_st, e_st), (b, e))
+                
+                if not inter_res is None and not inter_res == ():
+                    # ie intervals are not disjoint or intersection is void
+                    result.append((u, inter_res[0], inter_res[1]))
+        
         # pattern = pattern.issubset(s.label(v))
         if len(result) > 0:
             return True, result
@@ -114,15 +128,22 @@ class Stream:
         self.V = []
         self.W = {}
         self.E = {}
+        self.core_property = None
         
         # Language
         self.I = (lang_left, lang_right)
         
+        # Store both degree view and links (times) view,
+        # as the optimal view is different depending on the calculation
         self.degrees = {}
+        self.times = {}
         
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
-        
+    
+    def setCoreProperty(self, prop):
+        self.core_property = prop
+    
     def add_links(self, links):
         self.E = links
         self.V = set()
@@ -151,6 +172,11 @@ class Stream:
             except KeyError:
                 self.degrees[v] = [(u, b, 1, label_v), (u, e, -1, label_v)]
     
+            try:
+                self.times[frozenset([u,v])].append((b, e, label))
+            except KeyError:
+                self.times[frozenset([u,v])] = [ (b, e, label) ]
+    
     def readStream(self, filepath):
         fp = open(filepath)
         data = json.load(fp)
@@ -177,6 +203,12 @@ class Stream:
                 self.degrees[v].append((u, e, -1, label_v))
             except KeyError:
                 self.degrees[v] = [(u, b, 1, label_v), (u, e, -1, label_v)]
+                
+            try:
+                self.times[frozenset([u,v])].append((b, e, label_u, label_v))
+            except KeyError:
+                self.times[frozenset([u,v])] = [ (b, e, label_u, label_v) ]
+        
         return data
     
     def writeStream(self):
@@ -218,8 +250,9 @@ class Stream:
     def neighbours(self, node):
         return set([ x[0] for x in self.degrees[node] ])
     
-    def interior(self, X1, X2,  patterns=(set(), set()), threshold=3):
-        stsa = StreamStarSat(self, threshold)
+    def interior(self, X1, X2,  patterns=(set(), set())):
+        stsa = self.core_property
+        
         S1 = []
         S2 = []
 
@@ -237,10 +270,32 @@ class Stream:
             
             if S1 == old_S1 or S2 == old_S2:
                 break
-        
                 
         return S1, S2
 
+    def intersect(self, i, j):
+        # returns the intersection of two time intervals, or -1 is it is void
+        # does not make any asumption obout the order of the intervals, however
+        # both i and j *are* intervals (i.e. e >= b, and f >= c)
+        # TODO: extend to list of intervals
+        b, e = i
+        c, f = j
+
+        # Disjoint
+        if c >= e or f <= b:
+            return None
+        # Inclusion
+        if (c >= b and f <= e) or \
+           (b >= c and e <= f):
+                return (max(b,c), min(e,f))
+
+        # intersection
+        if (c <= b and f >= b and f <= e) or\
+           (b <= c and e >= c and e <= f):
+            return (max(b,c), min(e,f))
+
+        return ()
+    
     def _int(self, left, right):
         """
             Returns the intent of a pattern
@@ -279,8 +334,7 @@ class Stream:
         """
             Enumerates all bipatterns
         """
-        S = self.interior(_top, _bot, (set(), set()), threshold=30)
-        print(len(S[1]))
+        S = self.interior(_top, _bot, (set(), set()))
         self.enum(self._int([self.label(x) for x in S[0]], [self.label(x) for x in S[1]]), S, set())
         
     def _add(self, item, q, side=0):
