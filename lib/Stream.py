@@ -352,6 +352,7 @@ class Stream:
         #   return
 #         q = S
         candidates = [x for x in self._minus(self.I, q) if not x in EL]
+        print(f'Candidates {candidates}')
         self.logger.debug(f'candidats: {candidates}')
         S_bak = (S[0].copy(), S[1].copy())
         for x in candidates:
