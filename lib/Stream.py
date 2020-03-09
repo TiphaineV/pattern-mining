@@ -38,7 +38,6 @@ class StreamStarSat(StreamProperty):
         self.star_degree = threshold
 
     def p1(self, u, X1, X2, pattern):
-        # s = self.S
         s = self.S.substream(X1, X2)
         from operator import itemgetter
         result = []
@@ -74,15 +73,15 @@ class StreamStarSat(StreamProperty):
             return False, set(result)
     
     def p2(self, u, X1, X2, pattern):
-        # s = self.S
+        # First extract the substream induced by X1 and X2
         s = self.S.substream(X1, X2)
         from operator import itemgetter
         result = []
+        stars = []
 
-        # This NEEDS to be in X1, X2 ! Otherwise there can be no convergence
         for x in s.neighbours(u):
             # Find neighbours x of u that are stars
-            stars = []
+            # stars = []
             times = s.degrees[x]
             sorted_times = sorted(times, key=itemgetter(1))
 
@@ -149,10 +148,7 @@ class BiPattern:
     
     def add(self, item, side=0):
         # _q = (self.intent[0].copy(), self.intent[1].copy())
-        if side == 0:
-            self.lang[0].add(item)
-        else:
-            self.lang[1].add(item)
+        self.lang[side].add(item)
     
     def minus(self, I):
         """
@@ -165,7 +161,7 @@ class BiPattern:
 
 class TimeNode:
     """
-        For later refoactoring
+        For later refactoring
     """
     def __init__(self):
         self.node = _node
@@ -292,7 +288,7 @@ class Stream:
         return set()
     
     def substream(self, W1, W2):
-        # W1: [(u, b,e), (v, b',e'), etc.]
+        # W1, W2: [(u, b,e), (v, b',e'), etc.]
         # returns a substream induced by a subset of W.
         # Only return links etc. involving W1, W2, at their resp. times
         # Careful to return degrees etc. too !!
@@ -302,6 +298,7 @@ class Stream:
         subs.V = set([x[0] for x in  W1 ] + [x[0] for x in W2])
         subs.W = set(list(W1) + list(W2))
         subs.E = []
+        subs.degrees = { u: [] for u in subs.V }
         
         for l in self.E:
             if l["u"] in subs.V and l["v"] in subs.V :
@@ -345,19 +342,15 @@ class Stream:
         X2 = [ (x["v"], (x["b"], x["e"])) for x in self.E if q.issubset(set(x["label_v"]))]
         return set(X1), set(X2)
     
-    def intent(self, left):
+    def intent(self, langs):
         """
             Returns the intent of a pattern
         """
         
-        if left == []:
-            left = [set()]
-        try:
-            return set.intersection(*left)
-        except Exception as e:
-            print(e)
-            print(left)
-            sys.exit()
+        if langs == []:
+            langs = [set()]
+
+        return set.intersection(*langs)
     
     def intersect(self, i, j):
         # returns the intersection of two time intervals, or -1 is it is void
@@ -392,7 +385,7 @@ class Stream:
         self.enum(pattern, set())
         
     def enum(self, pattern, EL=set(), depth=0):
-        s = 3
+        s = 2
         
         q = pattern.lang
         S = pattern.support_set
