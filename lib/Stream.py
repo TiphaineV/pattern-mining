@@ -68,15 +68,16 @@ class StreamStarSat(StreamProperty):
         # pattern = pattern.issubset(s.label(u))
         
         if len(result) > 0:
-            return True, result
+            return True, set(result)
         else:
-            return False, result
+            return False, set(result)
     
     def p2(self, u, X1, X2, pattern):
         s = self.S
         from operator import itemgetter
         result = []
 
+        # This NEEDS to be in X1, X2 ! Otherwise there can be no convergence
         for x in s.neighbours(u):
             # Find neighbours x of u that are stars
             stars = []
@@ -118,10 +119,43 @@ class StreamStarSat(StreamProperty):
         
         # pattern = pattern.issubset(s.label(v))
         if len(result) > 0:
-            return True, result
+            return True, set(result)
         else:
-            return False, result
+            return False, set(result)
 
+class Pattern:
+    """
+        Monopattern class
+    """
+    def __init__(self, _intent=set(), _support_set=set()):
+        self.intent = _intent
+        self.support_set = _support_set
+        
+class BiPattern:
+    """
+        Bipattern class
+    """
+    def __init__(self, _lang=(set(), set()), _support_set=(set(), set())):
+        self.lang = _lang
+        self.support_set = _support_set
+    
+    def add(self, item, side=0):
+        # _q = (self.intent[0].copy(), self.intent[1].copy())
+        if side == 0:
+            self.lang[0].add(item)
+        else:
+            self.lang[1].add(item)
+    
+    def minus(self, I):
+        """
+            Returns the candidates for extension
+        """
+        candidates_left = [(x, 0) for x in set(I[0]).difference(self.lang[0]) ]
+        candidates_right = [(x, 1) for x in set(I[1]).difference(self.lang[1]) ]
+        
+        return set(candidates_left + candidates_right)
+    
+        
 class Stream:
     def __init__(self, lang_left=set(), lang_right=set(), _loglevel=logging.DEBUG):
         self.T = {}
@@ -271,8 +305,37 @@ class Stream:
             if S1 == old_S1 or S2 == old_S2:
                 break
                 
-        return S1, S2
+        return set(S1), set(S2)
 
+    def extent(self, q):
+        """
+            Returns the extent (support set) of a pattern
+        """
+        # Returns support set of a bipattern
+        X1 = [ (x["u"], (x["b"], x["e"])) for x in self.E if set(x["label_u"]).issubset(q[0])]
+        X2 = [ (x["v"], (x["b"], x["e"])) for x in self.E if set(x["label_v"]).issubset(q[1])]
+        print(X1, X2)
+        return set(X1), set(X2)
+    
+    def intent(self, left, right):
+        """
+            Returns the intent of a pattern
+            Both left and right are sets (multisets?) for the language
+        """
+        
+        if left == []:
+            left = [set()]
+        if right == []:
+            right = [set()]
+        try:
+            return set.intersection(*left), set.intersection(*right)
+        except Exception as e:
+            print(e)
+            print(left)
+            print("--------")
+            print(right)
+            sys.exit()
+    
     def intersect(self, i, j):
         # returns the intersection of two time intervals, or -1 is it is void
         # does not make any asumption obout the order of the intervals, however
@@ -296,62 +359,25 @@ class Stream:
 
         return ()
     
-    def _int(self, left, right):
-        """
-            Returns the intent of a pattern
-            Both left and right are sets (multisets?) for the language
-        """
-        if left == []:
-            left = [set()]
-        if right == []:
-            right = [set()]
-        try:
-            return set.intersection(*left), set.intersection(*right)
-        except Exception as e:
-            print(e)
-            print(left)
-            print("--------")
-            print(right)
-            sys.exit()
-            
-    def _ext(self, left, right):
-        """
-            Returns the extent (support set) of a pattern
-        """
-        # Returns support set of a bipattern
-        pass
-    
-    def _minus(self, I, q):
-        """
-            Returns the candidates for extension
-        """
-        candidates_left = [(x, 0) for x in set(I[0]).difference(q[0]) ]
-        candidates_right = [(x, 1) for x in set(I[1]).difference(q[1]) ]
-        
-        return set(candidates_left + candidates_right)
-    
     def bipatterns(self, _top, _bot):
         """
             Enumerates all bipatterns
         """
         S = self.interior(_top, _bot, (set(), set()))
-        self.enum(self._int([self.label(x) for x in S[0]], [self.label(x) for x in S[1]]), S, set())
+        pattern = BiPattern(self.intent([self.label(x) for x in S[0]], [self.label(x) for x in S[1]]), S)
+        self.enum(pattern, set())
         
-    def _add(self, item, q, side=0):
-        _q = (q[0].copy(), q[1].copy())
-        if side == 0:
-            _q[0].add(item)
-        else:
-            _q[1].add(item)
-        return _q
-        
-    def enum(self, q, S, EL=set(), depth=0):
+    def enum(self, pattern, EL=set(), depth=0):
         s = 2
+        
+        q = pattern.lang
+        S = pattern.support_set
+        
         print(q, S, depth)
         #if depth >= 5:
         #   return
 #         q = S
-        candidates = [x for x in self._minus(self.I, q) if not x in EL]
+        candidates = [x for x in pattern.minus(self.I) if not x in EL]
         print(f'Candidates {candidates}')
         self.logger.debug(f'candidats: {candidates}')
         S_bak = (S[0].copy(), S[1].copy())
@@ -360,14 +386,21 @@ class Stream:
             S = (S_bak[0].copy(), S_bak[1].copy())
             # print(f'S: {S}, S_bak: {S_bak}')
             # Extension
-            q_x = self._add(x[0], q, side = x[1])
+            pattern.add(x[0], side = x[1])
+            q_x = pattern.lang
             # self.logger.debug(f'\nConsidering [{x[0]}] q\'={q_x}')
             # Support set of q_x
-            S_x = self.interior(S[0], S[1], q_x) # interior(S \cap ext(q))
-            #print(f'q_x={q_x} has support set S_x = {S_x}')
+            
+            # Do S cap ext(q)
+            X1, X2 = self.extent(q_x)
+            
+            # S_x = self.interior(S[0], S[1], q_x) # interior(S \cap ext(q))
+            S_x = self.interior(X1, X2, q_x)
+            print(f'q_x={q_x} has support set S_x = {S_x}')
             if len(S_x[0].union(S_x[1])) >= s: # Union not sum in case it is not strictly bipartite
-                q_x = self._int([ self.label(x) for x in S_x[0] ] , [ self.label(x) for x in S_x[1] ])
+                #q_x = self.intent([ self.label(x) for x in S_x[0] ] , [ self.label(x) for x in S_x[1] ])
                 if len(q_x[0].intersection(EL)) == 0 and len(q_x[1].intersection(EL)) == 0:
                     #print(f'Call on {(q_x, S_x, EL)}')
-                    self.enum(q_x, S_x, EL, depth+1)
+                    pattern_x = BiPattern(q_x, S_x)
+                    self.enum(pattern_x, EL, depth+1)
                     EL.add(x)
