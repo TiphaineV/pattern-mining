@@ -1,0 +1,34 @@
+{
+"T": {
+    "alpha": 0,
+    "omega": 10
+},
+"V": ["u", "v", "x", "y"],
+"W": {},
+"E": [
+        {
+            "b": 1,
+            "e": 5,
+            "u": "u",
+            "v": "v",
+            "label_u": "abcd",
+            "label_v": "abcd"
+        },
+        {
+            "b": 1,
+            "e": 3,
+            "u": "v",
+            "v": "x",
+            "label_u": "abcd",
+            "label_v": "abc"
+        },
+        {
+            "b": 2,
+            "e": 4,
+            "u": "v",
+            "v": "y",
+            "label_u": "abcd",
+            "label_v": "abd"
+        }
+]
+}
