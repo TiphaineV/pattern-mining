@@ -1,128 +1,7 @@
 import sys
 import ujson as json
 import logging
-
-class StreamProperty():
-    def __init__(self, stream):
-        self.S = stream
-        
-    def p1(self):
-        return True
-
-    def p2(self):
-        return True
-
-class BHACore(StreamProperty):
-    def __init__(self, stream):
-        super(BHACore, self).__init__(stream)
-        self.h = 2
-        self.a = 2
-        
-    def p1(self, x, Z1, Z2, pattern):
-        subg = self.G.subgraph(Z1.union(Z2))
-        degree = subg.out_degree(x)
-        pattern = pattern.issubset(self.G.node[x]["lang"])
-        
-        return degree >= self.h and pattern
-        
-    def p2(self, x, Z1, Z2, pattern):
-        subg = self.G.subgraph(Z1.union(Z2))
-        degree = subg.in_degree(x)
-        pattern = pattern.issubset(self.G.node[x]["lang"])
-        
-        return degree >= self.a and pattern
-
-class StreamStarSat(StreamProperty):
-    def __init__(self, stream, threshold=3):
-        super().__init__(stream)
-        self.star_degree = threshold
-
-    def p1(self, u, X1, X2, pattern):
-        s = self.S.substream(X1, X2)
-        from operator import itemgetter
-        result = []
-        times = s.degrees[u]
-        sorted_times = sorted(times, key=itemgetter(1))
-
-        prop_true_t = 0
-        deg = 0
-        prop_was_true = False
-
-        for v, t, ev_type, label in sorted_times:
-            prop_is_true = False
-            if ev_type == 1:
-                deg += 1
-            elif ev_type == -1:
-                deg -= 1
-
-            if deg >= self.star_degree:
-                if not prop_was_true:
-                    prop_true_t = t
-                prop_is_true = True
-                prop_was_true = True
-
-            if not prop_is_true and prop_was_true:
-                result.append((u, prop_true_t, t))
-                prop_was_true = False
-
-        # pattern = pattern.issubset(s.label(u))
-        
-        if len(result) > 0:
-            return True, set(result)
-        else:
-            return False, set(result)
-    
-    def p2(self, u, X1, X2, pattern):
-        # First extract the substream induced by X1 and X2
-        s = self.S.substream(X1, X2)
-        from operator import itemgetter
-        result = []
-        stars = []
-
-        for x in s.neighbours(u):
-            # Find neighbours x of u that are stars
-            # stars = []
-            times = s.degrees[x]
-            sorted_times = sorted(times, key=itemgetter(1))
-
-            prop_true_t = 0
-            deg = 0
-            prop_was_true = False
-
-            for v, t, ev_type, label in sorted_times:
-                # Determine when x is star
-                prop_is_true = False
-                if ev_type == 1:
-                    deg += 1
-                elif ev_type == -1:
-                    deg -= 1
-
-                if deg >= self.star_degree:
-                    if not prop_was_true:
-                        prop_true_t = t
-                    prop_is_true = True
-                    prop_was_true = True
-
-                if not prop_is_true and prop_was_true:
-                    stars.append((x, prop_true_t, t))
-                    
-                    prop_was_true = False
-        
-        for v, b_st, e_st in stars:
-            times = s.times[frozenset([u, v])]
-            for x in times:
-                b, e = x[0], x[1]
-                inter_res = s.intersect((b_st, e_st), (b, e))
-                
-                if not inter_res is None and not inter_res == ():
-                    # ie intervals are not disjoint or intersection is void
-                    result.append((u, inter_res[0], inter_res[1]))
-        
-        # pattern = pattern.issubset(s.label(v))
-        if len(result) > 0:
-            return True, set(result)
-        else:
-            return False, set(result)
+from lib.StreamProperties import StreamStarSat
 
 class Pattern:
     """
@@ -163,12 +42,24 @@ class TimeNode:
     """
         For later refactoring
     """
-    def __init__(self):
+    def __init__(self, _node, _b, _e, _label=set()):
         self.node = _node
-        self.b = 0
-        self.e = 0
-        self.label = set()
+        self.b = _b
+        self.e = _e
+        self.label = _label
+        
+    def __str__(self):
+        return f"{self.node} [{self.b}, {self.e}]"
 
+    def __repr__(self):
+        return self.__str__()
+    
+    def __eq__(self, o):
+        return  self.node == o.node\
+                and self.b == o.b\
+                and self.e == o.e
+    def __hash__(self):
+        return hash((self.node, self.b, self.e))
         
 class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG):
@@ -193,6 +84,9 @@ class Stream:
         
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
+    
+    def nodes(self):
+        return self.V
     
     def add_link(self, l):
         u = l["u"]
@@ -315,6 +209,7 @@ class Stream:
         
         S1 = []
         S2 = []
+
         nodes = set([ x[0] for x in X1 ] + [ x[0] for x in X2 ])
 
         while 1:
