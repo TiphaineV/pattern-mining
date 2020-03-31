@@ -1,5 +1,4 @@
 streamfig
 ujson
-logging
 pytest
 pytest-datafiles
