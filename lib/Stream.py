@@ -62,12 +62,14 @@ class TimeNode:
         return hash((self.node, self.b, self.e))
         
 class Stream:
-    def __init__(self, lang=set(), _loglevel=logging.DEBUG):
+    def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
         self.T = {}
         self.V = []
         self.W = {}
         self.E = {}
         self.core_property = None
+        
+        self.bip_fp = _fp
         
         # Language
         if type(lang) is set:
@@ -233,9 +235,13 @@ class Stream:
         """
             Returns the extent (support set) of a pattern
         """
+        
+        # Way too slow, no need to go through whole E each time...
         X1 = [ (x["u"], (x["b"], x["e"])) for x in self.E if q.issubset(set(x["label_u"]))]
         X2 = [ (x["v"], (x["b"], x["e"])) for x in self.E if q.issubset(set(x["label_v"]))]
-        return set(X1), set(X2)
+        
+        X = set(X1 + X2)
+        return X, X
     
     def intent(self, langs):
         """
@@ -280,15 +286,25 @@ class Stream:
         self.enum(pattern, set())
         
     def enum(self, pattern, EL=set(), depth=0):
+        # Value passing is strange, especially when computing the intent;
+        # This causes candidates to be instantly discarded, and so 
+        # the next iteration repeats indefinitely with the same number of candidates.
+        
+        
+        # if depth > 2:
+        #    return
+        
         s = 2
         
         q = pattern.lang
         S = pattern.support_set
         
-        print("\n", q, S, depth)
+        print(f"{q} {S}", file=self.bip_fp)
 
-        candidates = [ x for x in pattern.minus(self.I) if not x in EL ]
-        # print(f'Candidates {candidates}')
+        candidates = [ x for x in pattern.minus(self.I) if not x in EL]
+        #print(f'{len(candidates)} candidates {candidates}')
+        #print(f'{len(EL)} {EL}')
+        #print("\n")
         
         # bak variables are necessary so that deeper recursion levels do not modify the current object
         # Could be done by copy() in call ?
@@ -302,19 +318,22 @@ class Stream:
 
             # Add 
             q_x = q_bak.copy()
+            # print(f"Adding {x} to {q_x}")
             q_x.add(x)
             # Support set of q_x
             X1, X2 = self.extent(q_x)
             # S_x = self.interior(S[0], S[1], q_x) # interior(S \cap ext(q))
             S_x = self.interior(X1, X2, q_x)
+            # print(S_x)
             # print(f'q_x={q_x} has support set S_x = {S_x}')
             if len(S_x[0].union(S_x[1])) >= s:
                 
                 q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]) ])
-                if len(q_x.intersection(EL)) == 0:
+                if len(q_x.intersection(EL_bak)) == 0 and q_x != q:
                     pattern_x = Pattern(q_x, S_x)
+                    # print(f"Calling enum with {pattern_x.lang} ({q_x})")
                     self.enum(pattern_x, EL, depth+1)
                     
                     # We reached a leaf of the recursion tree, add item to exclusion list
                     self.logger.debug(f"Adding {x} to EL\n")
-                    EL_bak.add(x)
+                    EL.add(x)
