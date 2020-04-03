@@ -1,3 +1,5 @@
+from lib.TimeNode import Interval
+
 class StreamProperty():
     def __init__(self, stream):
         self.S = stream
@@ -112,11 +114,13 @@ class StreamStarSat(StreamProperty):
             times = s.times[frozenset([u, v])]
             for x in times:
                 b, e = x[0], x[1]
-                inter_res = s.intersect((b_st, e_st), (b, e))
+                intv = Interval(b,e)
+                intv_st = Interval(b_st, e_st)
+                inter_res, inter_val = intv.intersect(intv_st)
                 
-                if not inter_res is None and not inter_res == ():
+                if inter_res:
                     # ie intervals are not disjoint or intersection is void
-                    result.append((u, inter_res[0], inter_res[1]))
+                    result.append((u, inter_val.b, inter_val.e))
         
         # pattern = pattern.issubset(s.label(v))
         if len(result) > 0:

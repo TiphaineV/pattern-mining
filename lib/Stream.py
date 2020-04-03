@@ -2,6 +2,7 @@ import sys
 import ujson as json
 import logging
 from lib.StreamProperties import StreamStarSat
+from lib.TimeNode import *
 
 class Pattern:
     """
@@ -37,39 +38,17 @@ class BiPattern:
         candidates_right = [(x, 1) for x in set(I[1]).difference(self.lang[1]) ]
         
         return set(candidates_left + candidates_right)
-
-class TimeNode:
-    """
-        For later refactoring
-    """
-    def __init__(self, _node, _b, _e, _label=set()):
-        self.node = _node
-        self.b = _b
-        self.e = _e
-        self.label = _label
-        
-    def __str__(self):
-        return f"{self.node} [{self.b}, {self.e}]"
-
-    def __repr__(self):
-        return self.__str__()
-    
-    def __eq__(self, o):
-        return  self.node == o.node\
-                and self.b == o.b\
-                and self.e == o.e
-    def __hash__(self):
-        return hash((self.node, self.b, self.e))
         
 class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
         self.T = {}
         self.V = []
-        self.W = {}
+        self.W = {} # TimeNodeSet
         self.E = {}
         self.core_property = None
         
         self.bip_fp = _fp
+        self.EL = set()
         
         # Language
         if type(lang) is set:
@@ -174,8 +153,8 @@ class Stream:
         """
             Returns the label associated to an element of W
         """
-        v = x[0]
-        b, e = x[1], x[2]
+        v = x.node
+        b, e = x.b, x.e
         
         # Iterate over neighborhood to find label
         for u, t, ev_type, label in self.degrees[v]:
@@ -228,8 +207,13 @@ class Stream:
             
             if S1 == old_S1 or S2 == old_S2:
                 break
-                
-        return set(S1), set(S2)
+        Z1 = []
+        Z2 = []
+        for v, b, e in S1:
+            Z1.append(TimeNode(v, b, e))
+        for v, b, e in S2:
+            Z2.append(TimeNode(v, b, e))
+        return TimeNodeSet(elements=Z1), TimeNodeSet(elements=Z2)
 
     def extent(self, q):
         """
@@ -253,35 +237,12 @@ class Stream:
 
         return set.intersection(*langs)
     
-    def intersect(self, i, j):
-        # returns the intersection of two time intervals, or -1 is it is void
-        # does not make any asumption obout the order of the intervals, however
-        # both i and j *are* intervals (i.e. e >= b, and f >= c)
-        # TODO: extend to list of intervals
-        b, e = i
-        c, f = j
-
-        # Disjoint
-        if c >= e or f <= b:
-            return None
-        # Inclusion
-        if (c >= b and f <= e) or \
-           (b >= c and e <= f):
-                return (max(b,c), min(e,f))
-
-        # intersection
-        if (c <= b and f >= b and f <= e) or\
-           (b <= c and e >= c and e <= f):
-            return (max(b,c), min(e,f))
-
-        return ()
-    
     def bipatterns(self, _top, _bot):
         """
             Enumerates all bipatterns
         """
         S = self.interior(_top, _bot, set())
-        pattern = Pattern(self.intent([self.label(x) for x in S[0].union(S[1])]),
+        pattern = Pattern(self.intent([self.label(x) for x in S[0].union(S[1]).values()]),
                           S)
         self.enum(pattern, set())
         
@@ -290,6 +251,7 @@ class Stream:
         # This causes candidates to be instantly discarded, and so 
         # the next iteration repeats indefinitely with the same number of candidates.
         
+        prefix = depth * 4 * ' '
         
         # if depth > 2:
         #    return
@@ -299,10 +261,12 @@ class Stream:
         q = pattern.lang
         S = pattern.support_set
         
-        print(f"{q} {S}", file=self.bip_fp)
+        print(f"{prefix} {q} {S}", file=self.bip_fp)
+#         print(f"{prefix} {q} {S}", file=self.bip_fp)
 
+        
         candidates = [ x for x in pattern.minus(self.I) if not x in EL]
-        #print(f'{len(candidates)} candidates {candidates}')
+        # print(f'{prefix} {len(candidates)} candidates {candidates}')
         #print(f'{len(EL)} {EL}')
         #print("\n")
         
@@ -310,7 +274,7 @@ class Stream:
         # Could be done by copy() in call ?
         q_bak = q.copy()
         S_bak = (S[0].copy(), S[1].copy())
-        EL_bak = EL.copy()
+#         EL_bak = EL.copy()
         
         for x in candidates:
             # S is not reduced between candidates at the same level of the search tree
@@ -320,20 +284,29 @@ class Stream:
             q_x = q_bak.copy()
             # print(f"Adding {x} to {q_x}")
             q_x.add(x)
+            # print(q_x)
             # Support set of q_x
             X1, X2 = self.extent(q_x)
             # S_x = self.interior(S[0], S[1], q_x) # interior(S \cap ext(q))
+            # Have to do for both sides, star and sat
             S_x = self.interior(X1, X2, q_x)
+            S_x = (S_x[0].intersection(S[0]), S_x[1].intersection(S[1]))
+             
             # print(S_x)
             # print(f'q_x={q_x} has support set S_x = {S_x}')
+            # print(f"S_x {S_x}")
             if len(S_x[0].union(S_x[1])) >= s:
                 
-                q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]) ])
-                if len(q_x.intersection(EL_bak)) == 0 and q_x != q:
+                q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]).values() ])
+                if len(q_x.intersection(self.EL)) == 0: # and q_x != q:
                     pattern_x = Pattern(q_x, S_x)
-                    # print(f"Calling enum with {pattern_x.lang} ({q_x})")
-                    self.enum(pattern_x, EL, depth+1)
+                    print(f"{depth} Calling enum with {pattern_x.lang} ({q_x})")
+                    self.enum(pattern_x, self.EL, depth+1)
                     
                     # We reached a leaf of the recursion tree, add item to exclusion list
-                    self.logger.debug(f"Adding {x} to EL\n")
-                    EL.add(x)
+                    print(f"{prefix} Adding {x} to EL")
+                    
+                    self.EL.add(x)
+                    
+    def fp_close(self):
+        self.bip_fp.close()
