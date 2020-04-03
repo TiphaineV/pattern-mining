@@ -261,7 +261,7 @@ class Stream:
         q = pattern.lang
         S = pattern.support_set
         
-        print(f"{prefix} {q} {S}", file=self.bip_fp)
+        print(f"{q} {S}", file=self.bip_fp)
 #         print(f"{prefix} {q} {S}", file=self.bip_fp)
 
         
@@ -298,13 +298,13 @@ class Stream:
             if len(S_x[0].union(S_x[1])) >= s:
                 
                 q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]).values() ])
-                if len(q_x.intersection(self.EL)) == 0: # and q_x != q:
+                if len(q_x.intersection(self.EL)) == 0 and (q_x != q or S_x != S): # q_x != q is really what needed ??
                     pattern_x = Pattern(q_x, S_x)
-                    print(f"{depth} Calling enum with {pattern_x.lang} ({q_x})")
+                    # print(f"{depth} Calling enum with {pattern_x.lang} ({S_x})")
                     self.enum(pattern_x, self.EL, depth+1)
                     
                     # We reached a leaf of the recursion tree, add item to exclusion list
-                    print(f"{prefix} Adding {x} to EL")
+                    # print(f"{prefix} Adding {x} to EL")
                     
                     self.EL.add(x)
                     
