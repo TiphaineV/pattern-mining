@@ -193,9 +193,9 @@ class Stream:
         
         S1 = []
         S2 = []
+        nodes = set( list(X1.nodes()) +  list(X2.nodes()) )
 
-        nodes = set([ x[0] for x in X1 ] + [ x[0] for x in X2 ])
-
+        self.subs = self.substream(X1, X2)
         while 1:
             old_S1 = S1
             old_S2 = S2
