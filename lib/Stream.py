@@ -62,6 +62,7 @@ class Stream:
         # as the optimal view is different depending on the calculation
         self.degrees = {}
         self.times = {}
+        self.subs = None
         
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
