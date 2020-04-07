@@ -2,3 +2,4 @@ streamfig
 ujson
 pytest
 pytest-datafiles
+pytest-cov
