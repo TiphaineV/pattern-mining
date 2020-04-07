@@ -159,7 +159,7 @@ class Stream:
         
         # Iterate over neighborhood to find label
         for u, t, ev_type, label in self.degrees[v]:
-            if b >= t and ev_type == 1:
+            if t >= b and ev_type == 1:
                 return set(label)
         return set()
     
