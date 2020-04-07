@@ -286,15 +286,14 @@ class Stream:
 
             # Add 
             q_x = q_bak.copy()
-            # print(f"Adding {x} to {q_x}")
+            # print(f"{prefix} Adding {x} to {q_x}")
             q_x.add(x)
             # print(q_x)
             # Support set of q_x
-            X1, X2 = self.extent(q_x)
-            # S_x = self.interior(S[0], S[1], q_x) # interior(S \cap ext(q))
-            # Have to do for both sides, star and sat
-            S_x = self.interior(X1, X2, q_x)
-            S_x = (S_x[0].intersection(S[0]), S_x[1].intersection(S[1]))
+            X = self.extent(q_x)
+
+            S_x = (X.intersection(S[0]), X.intersection(S[1]))
+            S_x = self.interior(S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
              
             # print(S_x)
             # print(f'q_x={q_x} has support set S_x = {S_x}')
@@ -304,7 +303,7 @@ class Stream:
                 q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]).values() ])
                 if len(q_x.intersection(self.EL)) == 0 and (q_x != q or S_x != S): # q_x != q is really what needed ??
                     pattern_x = Pattern(q_x, S_x)
-                    # print(f"{depth} Calling enum with {pattern_x.lang} ({S_x})")
+                    # print(f"{prefix} Calling enum with {pattern_x.lang} ({S_x})")
                     self.enum(pattern_x, self.EL, depth+1)
                     
                     # We reached a leaf of the recursion tree, add item to exclusion list
