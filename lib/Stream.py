@@ -167,17 +167,19 @@ class Stream:
         # W1, W2: [(u, b,e), (v, b',e'), etc.]
         # returns a substream induced by a subset of W.
         # Only return links etc. involving W1, W2, at their resp. times
-        # Careful to return degrees etc. too !!
+        # TODO : Update to make faster (for starters, don't iterate through all E every time)
         
         subs = Stream()
         subs.T = self.T
-        subs.V = set([x[0] for x in  W1 ] + [x[0] for x in W2])
-        subs.W = set(list(W1) + list(W2))
+        subs.V = set([x.node for x in  W1 ] + [x.node for x in W2])
+        subs.W = list(W1) + list(W2)
+        subs.W = TimeNodeSet(elements=subs.W)
         subs.E = []
         subs.degrees = { u: [] for u in subs.V }
         
         for l in self.E:
-            if l["u"] in subs.V and l["v"] in subs.V :
+            if TimeNode(l["u"], l["b"], l["e"]) in subs.W and\
+               TimeNode(l["v"], l["b"], l["e"]) in subs.W:
                 subs.add_link(l)
                 subs.E.append(l)
         
