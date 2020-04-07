@@ -85,11 +85,16 @@ class TimeNodeSet:
         self.elements = {}
 
         for w in elements:
-            if w.node in self.elements:
-                self.elements[w.node].append((Interval(w.b, w.e), w.label))
-            else:
-                self.elements[w.node] = [ (Interval(w.b, w.e), w.label) ]
+            self.add(w)
 
+    def __iter__(self):
+        for u in self.elements.keys():
+            for intv, label in self.elements[u]:
+                yield TimeNode(u, intv.b, intv.e, label)
+                
+    def nodes(self):
+        return self.elements.keys()
+                
     def add(self, x):
         
         if not x.node in self.elements:
@@ -179,12 +184,6 @@ class TimeNodeSet:
                         # then it's not in the intersection :)
 
         return union_set
-
-    def __in__(self, x):
-        """
-            Checks if element is in set
-        """
-        return True
 
     def copy(self):
         new = TimeNodeSet()
