@@ -1,6 +1,6 @@
 import pytest
 
-from lib.Stream import Stream, TimeNode
+from lib.Stream import Stream, TimeNode, TimeNodeSet
 from lib.StreamProperties import StreamStarSat
 import logging
 import os
@@ -22,14 +22,15 @@ class TestInterior:
         s.setCoreProperty(core_property)
         s.readStream(datafiles.listdir()[0])
 
-        X1 = [(x["u"], (x["b"], x["e"])) for x in s.E ]
-        X2 = [(x["v"], (x["b"], x["e"])) for x in s.E ]
+        X1 = [TimeNode(x["u"], x["b"], x["e"]) for x in s.E ]
+        X2 = [TimeNode(x["v"], x["b"], x["e"]) for x in s.E ]
 
         X = X1 + X2
+        X = TimeNodeSet(elements=X)
         interior = s.interior(X, X)
 
-        expected = (set([('v', 2, 3), ('v', 4, 5)]),\
-                    set([('u', 2, 3), ('y', 4, 5), ('u', 4, 5), ('y', 2, 3)]))
+        expected = (TimeNodeSet(elements=[TimeNode('v', 2, 3), TimeNode('v', 4, 5)]),\
+                    TimeNodeSet(elements=[TimeNode('u', 2, 3), TimeNode('y', 4, 5), TimeNode('u', 4, 5), TimeNode('y', 2, 3)]))
         assert(interior == expected)
 
 
