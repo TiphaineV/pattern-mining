@@ -22,6 +22,7 @@ class TimeNode:
         return  self.node == o.node\
                 and self.b == o.b\
                 and self.e == o.e
+    
     def __hash__(self):
         return hash((self.node, self.b, self.e))
 
@@ -91,6 +92,12 @@ class TimeNodeSet:
         for u in self.elements.keys():
             for intv, label in self.elements[u]:
                 yield TimeNode(u, intv.b, intv.e, label)
+
+    def __eq__(self, o):
+        """
+            Two TimeNodeSets are equal if they contain the same elements
+        """
+        return all([x in o for x in self])
                 
     def nodes(self):
         return self.elements.keys()
