@@ -224,11 +224,12 @@ class Stream:
         """
         
         # Way too slow, no need to go through whole E each time...
-        X1 = [ (x["u"], (x["b"], x["e"])) for x in self.E if q.issubset(set(x["label_u"]))]
-        X2 = [ (x["v"], (x["b"], x["e"])) for x in self.E if q.issubset(set(x["label_v"]))]
+        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in self.E if q.issubset(set(x["label_u"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in self.E if q.issubset(set(x["label_v"]))]
         
-        X = set(X1 + X2)
-        return X, X
+        X = X1 + X2
+        X = TimeNodeSet(elements=X)
+        return X
     
     def intent(self, langs):
         """
@@ -244,6 +245,7 @@ class Stream:
         """
             Enumerates all bipatterns
         """
+        self.EL = set()
         S = self.interior(_top, _bot, set())
         pattern = Pattern(self.intent([self.label(x) for x in S[0].union(S[1]).values()]),
                           S)
@@ -254,18 +256,17 @@ class Stream:
         # This causes candidates to be instantly discarded, and so 
         # the next iteration repeats indefinitely with the same number of candidates.
         
+        # Pretty print purposes
         prefix = depth * 4 * ' '
         
-        # if depth > 2:
-        #    return
         
         s = 2
         
         q = pattern.lang
         S = pattern.support_set
         
-        print(f"{q} {S}", file=self.bip_fp)
-#         print(f"{prefix} {q} {S}", file=self.bip_fp)
+        # print(f"{q} {S}", file=self.bip_fp)
+        print(f"{prefix} {q} {S}", file=self.bip_fp)
 
         
         candidates = [ x for x in pattern.minus(self.I) if not x in EL]
