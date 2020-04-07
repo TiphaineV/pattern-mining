@@ -3,3 +3,4 @@ ujson
 pytest
 pytest-datafiles
 pytest-cov
+codecov
