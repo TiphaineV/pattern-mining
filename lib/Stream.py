@@ -29,7 +29,6 @@ class Stream:
         # as the optimal view is different depending on the calculation
         self.degrees = {}
         self.times = {}
-        self.subs = None
         
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
@@ -250,21 +249,21 @@ class Stream:
             X = self.extent(q_x)
 
             S_x = (X.intersection(S[0]), X.intersection(S[1]))
-            S_x = self.interior(S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
-             
-            # print(S_x)
+            # print(f"S_x: {S_x}")
+            S_x = interior(self, S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
+            
             # print(f'q_x={q_x} has support set S_x = {S_x}')
-            # print(f"S_x {S_x}")
             if len(S_x[0].union(S_x[1])) >= s:
-                
+
                 q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]).values() ])
-                if len(q_x.intersection(self.EL)) == 0 and (q_x != q or S_x != S): # q_x != q is really what needed ??
+                if len(q_x.intersection(self.EL)) == 0 and (q_x != q or S_x != S):                     
                     pattern_x = Pattern(q_x, S_x)
+
                     # print(f"{prefix} Calling enum with {pattern_x.lang} ({S_x})")
                     self.enum(pattern_x, self.EL, depth+1)
                     
                     # We reached a leaf of the recursion tree, add item to exclusion list
-                    # print(f"{prefix} Adding {x} to EL")
+                    #print(f"{prefix} Adding {x} to EL")
                     
                     self.EL.add(x)
                     
