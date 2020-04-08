@@ -10,7 +10,7 @@ class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
         self.T = {}
         self.V = []
-        self.W = {} # TimeNodeSet
+        self.W = TimeNodeSet()
         self.E = {}
         self.core_property = None
         
@@ -33,6 +33,9 @@ class Stream:
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
     
+    def __eq__(self, o):
+        return self.T == o.T and self.V == o.V and self.W == o.W and self.E == o.E
+
     def nodes(self):
         return self.V
     
@@ -107,9 +110,14 @@ class Stream:
         data = json.load(fp)
         self.T = data["T"]
         self.V = data["V"]
+        self.W = TimeNodeSet()
         self.E = []
         
         for link in data["E"]:
+            t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label_u"])
+            t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label_v"])
+            self.W.add(t_u)
+            self.W.add(t_v)
             self.add_link(link)
         
         return data
