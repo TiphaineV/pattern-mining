@@ -127,9 +127,15 @@ class Stream:
         b, e = x.b, x.e
         
         # Iterate over neighborhood to find label
+        b_val = None
         for u, t, ev_type, label in self.degrees[v]:
-            if t >= b and ev_type == 1:
-                return set(label)
+            if t <= e and ev_type == 1:
+                b_val = t
+            if b_val is not None and ev_type == -1:
+                if b_val <= e <= t:
+                    return set(label)
+                else:
+                    b_val = None
         return set()
     
     def substream(self, W1, W2):
