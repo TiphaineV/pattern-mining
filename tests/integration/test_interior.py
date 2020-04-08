@@ -2,6 +2,7 @@ import pytest
 
 from lib.Stream import Stream, TimeNode, TimeNodeSet
 from lib.StreamProperties import StreamStarSat
+from lib.patterns import interior
 import logging
 import os
 
@@ -27,10 +28,11 @@ class TestInterior:
 
         X = X1 + X2
         X = TimeNodeSet(elements=X)
-        interior = s.interior(X, X)
+        s.W = X
+        int_val = interior(s, X, X)
 
         expected = (TimeNodeSet(elements=[TimeNode('v', 2, 3), TimeNode('v', 4, 5)]),\
                     TimeNodeSet(elements=[TimeNode('u', 2, 3), TimeNode('y', 4, 5), TimeNode('u', 4, 5), TimeNode('y', 2, 3)]))
-        assert(interior == expected)
+        assert(int_val == expected)
 
 
