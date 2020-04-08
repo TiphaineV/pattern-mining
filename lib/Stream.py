@@ -63,6 +63,9 @@ class Stream:
             self.times[frozenset([u,v])].append((b, e, label_u, label_v))
         except KeyError:
             self.times[frozenset([u,v])] = [ (b, e, label_u, label_v) ]
+        
+        # Add to E
+        self.E.append(l)
     
     def setCoreProperty(self, prop):
         self.core_property = prop
@@ -105,9 +108,9 @@ class Stream:
         data = json.load(fp)
         self.T = data["T"]
         self.V = data["V"]
-        self.E = data["E"]
+        self.E = []
         
-        for link in self.E:
+        for link in data["E"]:
             self.add_link(link)
         
         return data
