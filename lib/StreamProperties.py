@@ -37,8 +37,8 @@ class StreamStarSat(StreamProperty):
         super().__init__(stream)
         self.star_degree = threshold
 
-    def p1(self, u, X1, X2, pattern):
-        s = self.S.substream(X1, X2)
+    def p1(self, u, substream):
+        s = substream # self.S.substream(X1, X2)
         from operator import itemgetter
         result = []
         times = s.degrees[u]
@@ -72,9 +72,9 @@ class StreamStarSat(StreamProperty):
         else:
             return False, set(result)
     
-    def p2(self, u, X1, X2, pattern):
+    def p2(self, u, substream):
         # First extract the substream induced by X1 and X2
-        s = self.S.substream(X1, X2)
+        s = substream # self.S.substream(X1, X2)
         # s = self.S
         from operator import itemgetter
         result = []
@@ -121,7 +121,6 @@ class StreamStarSat(StreamProperty):
                     # ie intervals are not disjoint or intersection is void
                     result.append((u, inter_val.b, inter_val.e))
         
-        # pattern = pattern.issubset(s.label(v))
         if len(result) > 0:
             return True, set(result)
         else:
