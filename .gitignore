@@ -129,3 +129,8 @@ dmypy.json
 
 # Data files
 data/
+
+#Other
+StreamFig.py
+*png
+*fig
