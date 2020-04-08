@@ -3,42 +3,9 @@ import ujson as json
 import logging
 from lib.StreamProperties import StreamStarSat
 from lib.TimeNode import *
+from lib.patterns import *
 
-class Pattern:
-    """
-        Monopattern class
-    """
-    def __init__(self, _lang=set(), _support_set=set()):
-        self.lang = _lang
-        self.support_set = _support_set
-    
-    def add(self, item):
-        self.lang.add(item)
-        
-    def minus(self, I):
-        return set([ x for x in set(I).difference(self.lang) ])
-        
-class BiPattern:
-    """
-        Bipattern class
-    """
-    def __init__(self, _lang=(set(), set()), _support_set=(set(), set())):
-        self.lang = _lang
-        self.support_set = _support_set
-    
-    def add(self, item, side=0):
-        # _q = (self.intent[0].copy(), self.intent[1].copy())
-        self.lang[side].add(item)
-    
-    def minus(self, I):
-        """
-            Returns the candidates for extension
-        """
-        candidates_left = [(x, 0) for x in set(I[0]).difference(self.lang[0]) ]
-        candidates_right = [(x, 1) for x in set(I[1]).difference(self.lang[1]) ]
-        
-        return set(candidates_left + candidates_right)
-        
+
 class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
         self.T = {}
@@ -172,51 +139,38 @@ class Stream:
         subs = Stream()
         subs.T = self.T
         subs.V = set([x.node for x in  W1 ] + [x.node for x in W2])
-        subs.W = list(W1) + list(W2)
+        W = W1.union(W2)
+        subs.W = self.W.intersection(W)
         subs.W = TimeNodeSet(elements=subs.W)
         subs.E = []
         subs.degrees = { u: [] for u in subs.V }
         
         for l in self.E:
-            if TimeNode(l["u"], l["b"], l["e"]) in subs.W and\
-               TimeNode(l["v"], l["b"], l["e"]) in subs.W:
-                subs.add_link(l)
-                subs.E.append(l)
+            # It is necessary to truncate the link if it only partially
+            # intersects with subs.W
+            t_u = TimeNode(l["u"], l["b"], l["e"])
+            t_v = TimeNode(l["v"], l["b"], l["e"])
+
+            cap = TimeNodeSet(elements=[t_u, t_v]).intersection(subs.W).values()
+
+            if len(cap) == 2:
+                u, v = cap[0], cap[1]
+
+                if u.b == v.b and u.e == v.e:
+                    new_l = {
+                            "u":u.node,
+                            "v": v.node,
+                            "b": u.b,
+                            "e": u.e,
+                            "label_u": l["label_u"],
+                            "label_v": l["label_v"],
+                            }
+                    subs.add_link(new_l)
         
         return subs
     
     def neighbours(self, node):
         return set([ x[0] for x in self.degrees[node] ])
-    
-    def interior(self, X1, X2,  patterns=set()):
-        stsa = self.core_property
-        
-        S1 = []
-        S2 = []
-        nodes = set( list(X1.nodes()) +  list(X2.nodes()) )
-
-        self.subs = self.substream(X1, X2)
-        while 1:
-            old_S1 = S1
-            old_S2 = S2
-            for u in nodes:
-                _, tmp = stsa.p1(u, X1, X2, patterns)
-                __, tmp2 = stsa.p2(u, X1, X2, patterns)
-
-                if _ :
-                    S1 += tmp
-                if __ :
-                    S2 += tmp2
-            
-            if S1 == old_S1 or S2 == old_S2:
-                break
-        Z1 = []
-        Z2 = []
-        for v, b, e in S1:
-            Z1.append(TimeNode(v, b, e))
-        for v, b, e in S2:
-            Z2.append(TimeNode(v, b, e))
-        return TimeNodeSet(elements=Z1), TimeNodeSet(elements=Z2)
 
     def extent(self, q):
         """
@@ -246,7 +200,7 @@ class Stream:
             Enumerates all bipatterns
         """
         self.EL = set()
-        S = self.interior(_top, _bot, set())
+        S = interior(self, _top, _bot, set())
         pattern = Pattern(self.intent([self.label(x) for x in S[0].union(S[1]).values()]),
                           S)
         self.enum(pattern, set())
