@@ -156,7 +156,7 @@ class Stream:
         subs.T = self.T
         subs.V = set([x.node for x in  W1 ] + [x.node for x in W2])
         W = W1.union(W2)
-        subs.W = self.W.intersection(W)
+        subs.W = self.W.intersection(W) #  eee ?
         subs.W = TimeNodeSet(elements=subs.W)
         subs.E = []
         subs.degrees = { u: [] for u in subs.V }
@@ -188,14 +188,16 @@ class Stream:
     def neighbours(self, node):
         return set([ x[0] for x in self.degrees[node] ])
 
-    def extent(self, q):
+    def extent(self, q, S=None):
         """
             Returns the extent (support set) of a pattern
         """
         
-        # Way too slow, no need to go through whole E each time...
-        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in self.E if q.issubset(set(x["label_u"]))]
-        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in self.E if q.issubset(set(x["label_v"]))]
+        if S == None:
+            S = (self.E, self.E)
+            
+        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in S[0] if q.issubset(set(x["label_u"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q.issubset(set(x["label_v"]))]
         
         X = X1 + X2
         X = TimeNodeSet(elements=X)
@@ -230,16 +232,21 @@ class Stream:
         prefix = depth * 4 * ' '
         
         
-        s = 2
+        s = 5
         
         q = pattern.lang
         S = pattern.support_set
         
         # print(f"{q} {S}", file=self.bip_fp)
         print(f"{prefix} {q} {S}", file=self.bip_fp)
-
         
-        candidates = [ x for x in pattern.minus(self.I) if not x in EL]
+        # Rewrite this in minus
+        lang = self.I
+        lang = [ self.label(x) for x in S[0].union(S[1]).values() ]
+        lang = [item for sublist in lang for item in list(sublist) if item not in q  and item not in self.EL ]
+        candidates = set(lang)
+        
+        # candidates = [ x for x in pattern.minus(lang) if not x in EL]
         # print(f'{prefix} {len(candidates)} candidates {candidates}')
         #print(f'{len(EL)} {EL}')
         #print("\n")
@@ -266,19 +273,26 @@ class Stream:
             # print(f"S_x: {S_x}")
             S_x = interior(self, S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
             
-            # print(f'q_x={q_x} has support set S_x = {S_x}')
+            #print(f'q_x={q_x} has support set S_x = {S_x}')
             if len(S_x[0].union(S_x[1])) >= s:
 
                 q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]).values() ])
-                if len(q_x.intersection(self.EL)) == 0 and (q_x != q or S_x != S):                     
+#                 print("----")
+#                 print(S_x)
+#                 print("----")
+#                 print(S)
+#                 print("----")
+#                 print("----")
+#                 print(S_x[0] == S[0], S_x[1] == S[1], q_x != q)
+  
+                if len(q_x.intersection(self.EL)) == 0 and q_x != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
                     pattern_x = Pattern(q_x, S_x)
 
                     # print(f"{prefix} Calling enum with {pattern_x.lang} ({S_x})")
                     self.enum(pattern_x, self.EL, depth+1)
                     
                     # We reached a leaf of the recursion tree, add item to exclusion list
-                    #print(f"{prefix} Adding {x} to EL")
-                    
+                    print(f"{prefix} Adding {x} to EL")
                     self.EL.add(x)
                     
     def fp_close(self):

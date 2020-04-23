@@ -38,8 +38,8 @@ class BiPattern:
 def interior(s, X1, X2,  patterns=set()):
     stsa = s.core_property
         
-    S1 = []
-    S2 = []
+    S1 = TimeNodeSet()
+    S2 = TimeNodeSet()
 
     substream = s.substream(X1, X2)
     nodes = set(substream.V) # set( list(X1.nodes()) +  list(X2.nodes()) )
@@ -52,17 +52,13 @@ def interior(s, X1, X2,  patterns=set()):
             p2_true, tmp2 = stsa.p2(u, substream)
 
             if p1_true:
-                S1 += tmp
+                for x in tmp:
+                    S1.add(x)
             if p2_true:
-                S2 += tmp2
+                for x in tmp2:
+                    S2.add(x)
         
         if S1 == old_S1 or S2 == old_S2:
             break
 
-    Z1 = []
-    Z2 = []
-    for v, b, e in S1:
-        Z1.append(TimeNode(v, b, e))
-    for v, b, e in S2:
-        Z2.append(TimeNode(v, b, e))
-    return TimeNodeSet(elements=Z1), TimeNodeSet(elements=Z2)
+    return S1, S2
