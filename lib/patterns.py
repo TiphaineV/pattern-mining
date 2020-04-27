@@ -1,4 +1,5 @@
 from lib.TimeNode import TimeNode, TimeNodeSet
+from lib.StreamProperties import *
 import operator
 
 class Pattern:
@@ -36,7 +37,11 @@ class BiPattern:
         
         return set(candidates_left + candidates_right)
     
-def interior(s, X1, X2,  patterns=set()):
+def generic_interior(s, X1, X2,  patterns=set()):
+    """
+        Slower, but works for any property that defines p_1 and p2
+        Use it if the property has no self defined interior function.
+    """
     stsa = s.core_property
         
     S1 = TimeNodeSet()
@@ -64,7 +69,19 @@ def interior(s, X1, X2,  patterns=set()):
 
     return S1, S2
 
-def get_stars_sats(s, threshold=3):
+def interior(s):
+    """
+        Factory interior function, will attempt to call a specialized faster function,
+        or will default to the generic algorithm if there is no such function
+    """
+    prop = s.core_property
+    # print(type(prop))
+    #if type(prop) is StreamProperties.StreamStarSat:
+    return prop.interior(s)
+    #else:
+    #    raise Error
+
+def get_stars_sats(s, threshold=1):
     """
         Interior function for star satellite, modify to return a stream instead ?
         @param s: a stream graph

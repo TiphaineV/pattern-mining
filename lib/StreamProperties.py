@@ -1,4 +1,5 @@
 from lib.TimeNode import Interval, TimeNode, TimeNodeSet
+import operator
 
 class StreamProperty():
     def __init__(self, stream):
@@ -34,31 +35,28 @@ class StreamStarSat(StreamProperty):
     
     def __init__(self, stream, threshold=3):
         super().__init__(stream)
-        self.star_degree = threshold
-
-        self.stars = {}
-        self.sat = {}
+        self.threshold = threshold
         
-        self.get_stars_sats(stream)
-        
-    
-    def get_stars_sats(self, s):
+    def interior(self, s):
         """
+            Interior function for star satellite, modify to return a stream instead ?
             @param s: a stream graph
             @return: two TimeNodeSets, each containing the k-stars and k-satellites of s
         """
 
-        THRESHOLD = self.star_degree
+        THRESHOLD = self.threshold
         stars = TimeNodeSet()
         satellites = TimeNodeSet()
 
-        for u in s.degrees:
+        for k, u in enumerate(s.degrees):
             neigh = set()
             best_neighs = set()
-            last_times = {u: -1 for u in s.degrees}
+            last_times = {} # {u: -1 for u in s.degrees}
             for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
                 v, t, ev_type = i[0], i[1], i[2]
+                # First check if the property is true
                 starsat_is_true = len(neigh) >= THRESHOLD
+
                 if starsat_is_true:
                     best_neighs = best_neighs.union(neigh)
 
@@ -74,12 +72,16 @@ class StreamStarSat(StreamProperty):
                     if starsat_is_true:
                         stars.add(TimeNode(u, last_times[u], t))
                         for x in best_neighs:
-                            satellites.add(TimeNode(x, last_times[x], t))
+                            # min sur le t aussi ? 
+                            satellites.add(TimeNode(x, max(last_times[x], last_times[u]), t))
                         best_neighs = set()
         return stars, satellites
+    
+    def get_values(self):
+        return self.stars, self.sat
         
-        
-    def p1(self, u, substream): # Star
+    def p1(self, x): # Star
+        # Does (x, b, e) validate the star condition ?
         if self.substream is None or substream != self.substream:
             self.substream = substream
             self.get_stars_sat(u)
@@ -89,7 +91,7 @@ class StreamStarSat(StreamProperty):
         
         return True, self.stars
     
-    def p2(self, u, substream): # Sat
+    def p2(self, x): # Sat
         if self.substream is None or substream != self.substream:
             self.substream = substream
             self.get_stars_sat(u)

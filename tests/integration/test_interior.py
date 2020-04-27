@@ -31,7 +31,7 @@ class TestInterior:
         # X = TimeNodeSet(elements=X)
         # s.W = X
         # int_val = interior(s, X, X)
-        int_val = get_stars_sats(s, threshold=2)
+        int_val = interior(s)
 
         expected = (TimeNodeSet(elements=[TimeNode('v', 2, 3), TimeNode('v', 4, 5)]),\
                     TimeNodeSet(elements=[TimeNode('u', 2, 3), TimeNode('y', 4, 5), TimeNode('u', 4, 5), TimeNode('y', 2, 3)]))
@@ -54,7 +54,7 @@ class TestInterior:
         # X = TimeNodeSet(elements=X)
         # s.W = X
         # int_val = interior(s, X, X)
-        int_val = get_stars_sats(s, threshold=2)
+        int_val = interior(s)
 
         expected = (TimeNodeSet(elements=[TimeNode('v', 1, 4)]),\
                     TimeNodeSet(elements=[TimeNode('u', 1, 4), TimeNode('y', 2, 4), TimeNode('x', 1, 3)]))
@@ -76,7 +76,7 @@ class TestInterior:
         # X = TimeNodeSet(elements=X)
         # s.W = X
         # int_val = interior(s, X, X)
-        int_val = get_stars_sats(s, threshold=3)
+        int_val = interior(s)
 
         expected = (TimeNodeSet(elements=[TimeNode('v', 2, 4)]),\
                     TimeNodeSet(elements=[TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4)]))
@@ -92,7 +92,7 @@ class TestInterior:
         s.readStream(datafiles.listdir()[0])
 
 
-        int_val = get_stars_sats(s, threshold=3)
+        int_val = interior(s)
 
         expected = (TimeNodeSet(elements=[TimeNode('v', 2, 4), TimeNode('v', 5, 6) ]),\
                     TimeNodeSet(elements=[TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4), TimeNode('u', 5, 6), TimeNode('y', 5, 6), TimeNode('x', 5, 6)]))

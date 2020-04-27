@@ -15,6 +15,7 @@ class Stream:
         self.core_property = None
         
         self.bip_fp = _fp
+        self.bipatterns_list = []
         self.EL = set()
         
         # Language
@@ -213,17 +214,19 @@ class Stream:
 
         return set.intersection(*langs)
     
-    def bipatterns(self, _top, _bot):
+    def bipatterns(self, _top, _bot, s=2):
         """
             Enumerates all bipatterns
         """
         self.EL = set()
-        S = interior(self, _top, _bot, set())
+        self.bipatterns_list = []
+        # S = interior(self, _top, _bot, set())
+        S = self.core_property.interior(self)
         pattern = Pattern(self.intent([self.label(x) for x in S[0].union(S[1]).values()]),
                           S)
-        self.enum(pattern, set())
+        self.enum(pattern, set(), s=s)
         
-    def enum(self, pattern, EL=set(), depth=0):
+    def enum(self, pattern, EL=set(), depth=0, s=2, parent=set()):
         # Value passing is strange, especially when computing the intent;
         # This causes candidates to be instantly discarded, and so 
         # the next iteration repeats indefinitely with the same number of candidates.
@@ -231,14 +234,12 @@ class Stream:
         # Pretty print purposes
         prefix = depth * 4 * ' '
         
-        
-        s = 5
-        
         q = pattern.lang
         S = pattern.support_set
         
-        # print(f"{q} {S}", file=self.bip_fp)
-        print(f"{prefix} {q} {S}", file=self.bip_fp)
+        self.bipatterns_list.append((pattern, parent))
+        print(f"{q} {S}", file=self.bip_fp)
+        # print(f"{prefix} {q} {S}", file=self.bip_fp)
         
         # Rewrite this in minus
         lang = self.I
@@ -271,8 +272,10 @@ class Stream:
 
             S_x = (X.intersection(S[0]), X.intersection(S[1]))
             # print(f"S_x: {S_x}")
-            S_x = interior(self, S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
-            
+            subs = self.substream(S_x[0], S_x[1])
+            subs.setCoreProperty(self.core_property)
+            # S_x = interior(self, S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
+            S_x = subs.core_property.interior(subs)
             #print(f'q_x={q_x} has support set S_x = {S_x}')
             if len(S_x[0].union(S_x[1])) >= s:
 
@@ -289,10 +292,10 @@ class Stream:
                     pattern_x = Pattern(q_x, S_x)
 
                     # print(f"{prefix} Calling enum with {pattern_x.lang} ({S_x})")
-                    self.enum(pattern_x, self.EL, depth+1)
+                    self.enum(pattern_x, self.EL, depth+1, parent=q)
                     
                     # We reached a leaf of the recursion tree, add item to exclusion list
-                    print(f"{prefix} Adding {x} to EL")
+                    # print(f"{prefix} Adding {x} to EL")
                     self.EL.add(x)
                     
     def fp_close(self):
