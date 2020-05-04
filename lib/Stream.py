@@ -1,10 +1,10 @@
-import sys
 import ujson as json
+import sys
 import logging
 from lib.StreamProperties import StreamStarSat
 from lib.TimeNode import *
 from lib.patterns import *
-
+import ipdb
 
 class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
@@ -115,6 +115,7 @@ class Stream:
         self.E = []
         
         for link in data["E"]:
+            labels = link["label_u"].union(link["label_v"])
             t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label_u"])
             t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label_v"])
             self.W.add(t_u)
@@ -279,7 +280,7 @@ class Stream:
             #print(f'q_x={q_x} has support set S_x = {S_x}')
             if len(S_x[0].union(S_x[1])) >= s:
 
-                q_x = self.intent([ self.label(x) for x in S_x[0].union(S_x[1]).values() ])
+                q_x = subs.intent([ subs.label(x) for x in S_x[0].union(S_x[1]).values() ])
 #                 print("----")
 #                 print(S_x)
 #                 print("----")
@@ -287,7 +288,6 @@ class Stream:
 #                 print("----")
 #                 print("----")
 #                 print(S_x[0] == S[0], S_x[1] == S[1], q_x != q)
-  
                 if len(q_x.intersection(self.EL)) == 0 and q_x != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
                     pattern_x = Pattern(q_x, S_x)
 
