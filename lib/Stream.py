@@ -114,7 +114,6 @@ class Stream:
         self.E = []
         
         for link in data["E"]:
-            labels = link["label_u"].union(link["label_v"])
             t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label_u"])
             t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label_v"])
             self.W.add(t_u)
