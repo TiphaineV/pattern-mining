@@ -15,6 +15,45 @@ class Pattern:
         
     def minus(self, I):
         return set([ x for x in set(I).difference(self.lang) ])
+    
+    def intent(self):
+        """
+            Returns the intent of a pattern
+        """
+        
+        langs = [ self.support_set.label(x) for x in self.support_set.W.values() ]
+        
+        if langs == []:
+            langs = [set()]
+
+        return set.intersection(*langs)
+
+    def extent(self, S=None):
+        """
+            Returns the extent (support set) of a pattern in a stream S
+        """
+        q = self.lang
+        
+        if S is None:
+            S = (self.support_set.E, self.support_set.E)
+        else:
+            S = (S.E, S.E)
+            
+        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in S[0] if q.issubset(set(x["label_u"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q.issubset(set(x["label_v"]))]
+        
+        X = X1 + X2
+        X = TimeNodeSet(elements=X)
+        return X
+    
+    def __str__(self):
+        return f"{self.lang} {self.support_set.W}"
+        
+    def __repr__(self):
+        return self.__str__()
+    
+    def __eq__(self, o):
+        return self.lang == o.lang and self.support_set == o.support_set
         
 class BiPattern:
     """
