@@ -169,14 +169,14 @@ def bipatterns(stream, _top, _bot, s=2):
     stream.bipatterns_list = []
     # S = interior(self, _top, _bot, set())
     S = stream.core_property.interior(stream)
-    pattern = Pattern(stream.intent([stream.label(x) for x in S[0].union(S[1]).values()]),
-                      S)
-    enum(stream, pattern, set(), s=s)
+    pattern = Pattern(set(), S)
+    pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
+    enum(stream, pattern, set(), s=s, glob_stream=stream)
     
-def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set()):
-    # Value passing is strange, especially when computing the intent;
-    # This causes candidates to be instantly discarded, and so 
-    # the next iteration repeats indefinitely with the same number of candidates.
+def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None):
+    """
+        Internal routine for pattern enumeration
+    """
     
     # Pretty print purposes
     prefix = depth * 4 * ' '
@@ -184,64 +184,53 @@ def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set()):
     q = pattern.lang
     S = pattern.support_set
     
-    stream.bipatterns_list.append((pattern, parent))
-    print(f"{q} {S}", file=stream.bip_fp)
-    # print(f"{prefix} {q} {S}", file=self.bip_fp)
+    glob_stream.bipatterns_list.append((pattern, parent))
+    print(pattern, file=stream.bip_fp)
+    # print(f"{q} {S}", file=stream.bip_fp)
     
     # Rewrite this in minus
-    lang = stream.I
-    lang = [ stream.label(x) for x in S[0].union(S[1]).values() ]
-    lang = [item for sublist in lang for item in list(sublist) if item not in q  and item not in stream.EL ]
+    lang = S.I
+    lang = [ S.label(x) for x in S.W.values() ]
+    lang = [item for sublist in lang for item in list(sublist) if item not in q  and item not in S.EL ]
     candidates = set(lang)
-    
-    # candidates = [ x for x in pattern.minus(lang) if not x in EL]
-    # print(f'{prefix} {len(candidates)} candidates {candidates}')
-    #print(f'{len(EL)} {EL}')
-    #print("\n")
     
     # bak variables are necessary so that deeper recursion levels do not modify the current object
     # Could be done by copy() in call ?
     q_bak = q.copy()
-    S_bak = (S[0].copy(), S[1].copy())
+    S_bak = S.copy() # (S[0].copy(), S[1].copy())
 #         EL_bak = EL.copy()
     
     for x in candidates:
         # S is not reduced between candidates at the same level of the search tree
-        S = (S_bak[0].copy(), S_bak[1].copy())
-
-        # Add 
+        S = S_bak.copy() # (S_bak[0].copy(), S_bak[1].copy())
         q_x = q_bak.copy()
-        # print(f"{prefix} Adding {x} to {q_x}")
+
+        # Add candidate to pattern
         q_x.add(x)
+        p_x = Pattern(q_x, S)
         # print(q_x)
         # Support set of q_x
-        X = stream.extent(q_x)
+        X = p_x.extent(S=S)
 
-        S_x = (X.intersection(S[0]), X.intersection(S[1]))
+        S_x = (X.intersection(S.W), X.intersection(S.W))
         # print(f"S_x: {S_x}")
         subs = stream.substream(S_x[0], S_x[1])
         subs.setCoreProperty(stream.core_property)
         subs.EL = stream.EL
         # S_x = interior(self, S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
         S_x = subs.core_property.interior(subs)
+        p_x = Pattern(q_x, S_x)
         # print(depth, len(stream.V), len(subs.V))
         # ipdb.set_trace()
         #print(f'q_x={q_x} has support set S_x = {S_x}')
-        if len(S_x[0].union(S_x[1])) >= s:
-
-            q_x = subs.intent([ subs.label(x) for x in S_x[0].union(S_x[1]).values() ])
-#                 print("----")
-#                 print(S_x)
-#                 print("----")
-#                 print(S)
-#                 print("----")
-#                 print("----")
-#                 print(S_x[0] == S[0], S_x[1] == S[1], q_x != q)
-            if len(q_x.intersection(stream.EL)) == 0 and q_x != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
-                pattern_x = Pattern(q_x, S_x)
+        if len(p_x.support_set.W) >= s:
+            p_x.lang = p_x.intent() # S_x.intent([ S_x.label(x) for x in S_x.W.values() ])
+            
+            if len(p_x.lang.intersection(stream.EL)) == 0 and p_x.lang != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
+                # pattern_x = Pattern(q_x, S_x)
 
                 # print(f"{prefix} Calling enum with {pattern_x.lang} ({S_x})")
-                enum(subs, pattern_x, stream.EL, depth+1, parent=q)
+                enum(subs, p_x, stream.EL, depth+1, parent=q, glob_stream=glob_stream)
                 
                 # We reached a leaf of the recursion tree, add item to exclusion list
                 # print(f"{prefix} Adding {x} to EL")
