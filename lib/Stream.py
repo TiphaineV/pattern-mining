@@ -204,29 +204,14 @@ class Stream:
     
     def neighbours(self, node):
         return set([ x[0] for x in self.degrees[node] ])
-
-    def extent(self, q, S=None):
-        """
-            Returns the extent (support set) of a pattern
-        """
-        
-        if S == None:
-            S = (self.E, self.E)
-            
-        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in S[0] if q.issubset(set(x["label_u"]))]
-        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q.issubset(set(x["label_v"]))]
-        
-        X = X1 + X2
-        X = TimeNodeSet(elements=X)
-        return X
     
-    def intent(self, langs):
-        """
-            Returns the intent of a pattern
-        """
-        
-        if langs == []:
-            langs = [set()]
-
-        return set.intersection(*langs)
+    def __str__(self):
+        edges = '\n'.join([f"({x['b']}, {x['e']}, {x['u']}, {x['v']})" for x in self.E ])
+        return f"T: {self.T}\n\
+V: {self.V},\n\
+W: {self.W},\n\
+E: {edges}\
+        "
     
+    def __repr__(self):
+        return self.__str__()
