@@ -1,4 +1,5 @@
 from lib.TimeNode import Interval, TimeNode, TimeNodeSet
+from lib.Stream import Stream
 import operator
 
 class StreamProperty():
@@ -43,7 +44,6 @@ class StreamStarSat(StreamProperty):
             @param s: a stream graph
             @return: two TimeNodeSets, each containing the k-stars and k-satellites of s
         """
-
         THRESHOLD = self.threshold
         stars = TimeNodeSet()
         satellites = TimeNodeSet()
@@ -75,7 +75,7 @@ class StreamStarSat(StreamProperty):
                             # min sur le t aussi ? 
                             satellites.add(TimeNode(x, max(last_times[x], last_times[u]), t))
                         best_neighs = set()
-        return stars, satellites
+        return s.substream(stars, satellites)
     
     def get_values(self):
         return self.stars, self.sat
