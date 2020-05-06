@@ -1,16 +1,16 @@
 import ujson as json
 import sys
 import logging
-from lib.StreamProperties import StreamStarSat
+# from lib.StreamProperties import StreamStarSat
 from lib.TimeNode import *
-from lib.patterns import *
+from lib.patterns import Pattern
 
 class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
         self.T = {}
-        self.V = []
+        self.V = set()
         self.W = TimeNodeSet()
-        self.E = {}
+        self.E = []
         self.core_property = None
         
         self.bip_fp = _fp
@@ -37,7 +37,21 @@ class Stream:
         return self.T == o.T and self.V == o.V and self.W == o.W and self.E == o.E
 
     def nodes(self):
+        # iterator on nodes ?
         return self.V
+    
+    def copy(self):
+        stream_copy = Stream(lang=self.I, _fp=self.bip_fp)
+        stream_copy.T = self.T
+        stream_copy.V = self.V.copy()
+        stream_copy.W = self.W.copy()
+        stream_copy.E = self.E.copy()
+        stream_copy.degrees = self.degrees.copy()
+        stream_copy.times = self.times.copy()
+        stream_copy.EL = self.EL.copy()
+        stream_copy.core_property = self.core_property
+        
+        return stream_copy
     
     def add_link(self, l):
         u = l["u"]
@@ -47,6 +61,9 @@ class Stream:
         label_u = l["label_u"]
         label_v = l["label_v"]
 
+        self.V.add(u)
+        self.V.add(v)
+        
         # Maintain temporal adjacency list 
         try:
             self.degrees[u].append((v, b, 1, label_u))
@@ -109,7 +126,7 @@ class Stream:
         fp = open(filepath)
         data = json.load(fp)
         self.T = data["T"]
-        self.V = data["V"]
+        self.V = set(data["V"])
         self.W = TimeNodeSet()
         self.E = []
         
