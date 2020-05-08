@@ -59,22 +59,58 @@ class BiPattern:
     """
         Bipattern class
     """
-    def __init__(self, _lang=(set(), set()), _support_set=(set(), set())):
+    def __init__(self, _lang=(set(), set()), _support_set=set()):
         self.lang = _lang
         self.support_set = _support_set
     
-    def add(self, item, side=0):
-        # _q = (self.intent[0].copy(), self.intent[1].copy())
-        self.lang[side].add(item)
-    
-    def minus(self, I):
-        """
-            Returns the candidates for extension
-        """
-        candidates_left = [(x, 0) for x in set(I[0]).difference(self.lang[0]) ]
-        candidates_right = [(x, 1) for x in set(I[1]).difference(self.lang[1]) ]
+    def add(self, item, side):
+        if side == 0:
+            self.lang[0].add(item)
+        else:
+            self.lang[1].add(item)
         
-        return set(candidates_left + candidates_right)
+    def minus(self, I):
+        return set([ x for x in set(I[0]).difference(self.lang[0]) ]), set([ x for x in set(I[1]).difference(self.lang[1]) ])
+    
+    def intent(self):
+        """
+            Returns the intent of a pattern
+        """
+        
+        langs_left = [ self.support_set.label(x) for x in self.support_set.W.values() if x.node in self.support_set._top ]
+        langs_right = [ self.support_set.label(x) for x in self.support_set.W.values() if x.node in self.support_set._bot ]
+        
+        if langs == []:
+            langs = [set()]
+
+        return set.intersection(*langs)
+
+    def extent(self, S=None):
+        """
+            Returns the extent (support set) of a pattern in a stream S
+        """
+        q = self.lang
+        
+        if S is None:
+            S = (self.support_set.E, self.support_set.E)
+        else:
+            S = (S.E, S.E)
+            
+        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in S[0] if q.issubset(set(x["label_u"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q.issubset(set(x["label_v"]))]
+        
+        X = X1 + X2
+        X = TimeNodeSet(elements=X)
+        return X
+    
+    def __str__(self):
+        return f"{self.lang} {self.support_set.W}"
+        
+    def __repr__(self):
+        return self.__str__()
+    
+    def __eq__(self, o):
+        return self.lang == o.lang and self.support_set == o.support_set
     
 def generic_interior(s, X1, X2,  patterns=set()):
     """
@@ -172,7 +208,19 @@ def bipatterns(stream, _top, _bot, s=2):
     pattern = Pattern(set(), S)
     pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
     enum(stream, pattern, set(), s=s, glob_stream=stream)
-    
+
+def patterns(stream, _top, _bot, s=2):  
+    """
+        Enumerates all patterns
+    """
+    stream.EL = set()
+    stream.bipatterns_list = []
+    # S = interior(self, _top, _bot, set())
+    S = stream.core_property.interior(stream)
+    pattern = BiPattern(set(), S)
+    pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
+    enum(stream, pattern, set(), s=s, glob_stream=stream)
+
 def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None):
     """
         Internal routine for pattern enumeration
