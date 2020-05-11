@@ -1,6 +1,8 @@
 from lib.TimeNode import TimeNode, TimeNodeSet
 from lib.StreamProperties import *
 import operator
+from lib.errors import *
+import copy
 
 class Pattern:
     """
@@ -45,6 +47,12 @@ class Pattern:
         X = X1 + X2
         X = TimeNodeSet(elements=X)
         return X
+    
+    def elements(self):
+        return self.lang
+    
+    def copy(self):
+        return Pattern(self.lang.copy(), self.support_set.copy())
     
     def __str__(self):
         return f"{self.lang} {self.support_set.W}"
