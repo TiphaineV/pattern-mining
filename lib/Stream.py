@@ -18,10 +18,10 @@ class Stream:
         self.EL = set()
         
         # Language
-        if type(lang) is set:
-            self.patternClass = Pattern
-        else:
-            self.patternClass = BiPattern
+#         if type(lang) is set:
+#             self.patternClass = Pattern
+#         else:
+#             self.patternClass = BiPattern
         
         self.I = lang
         
