@@ -3,7 +3,6 @@ import sys
 import logging
 # from lib.StreamProperties import StreamStarSat
 from lib.TimeNode import *
-from lib.patterns import Pattern
 
 class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
