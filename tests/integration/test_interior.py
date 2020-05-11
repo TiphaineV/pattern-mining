@@ -33,13 +33,13 @@ class TestInterior:
         # int_val = interior(s, X, X)
         int_val = interior(s)
 
-        expected = (TimeNodeSet(elements=[TimeNode('v', 2, 3), TimeNode('v', 4, 5)]),\
+        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 2, 3), TimeNode('v', 4, 5)]),\
                     TimeNodeSet(elements=[TimeNode('u', 2, 3), TimeNode('y', 4, 5), TimeNode('u', 4, 5), TimeNode('y', 2, 3)]))
         assert(int_val == expected)
 
 
     @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, "ChangingNeighbours-StSa-Copy1.json")        
+        os.path.join(FIXTURE_DIR, "ChangingNeighbours-StSa.json")        
     )
     def test_interior_changing_neighbours(self, datafiles):
         s = Stream(lang=set("abcd"), _loglevel=logging.INFO)
@@ -56,7 +56,7 @@ class TestInterior:
         # int_val = interior(s, X, X)
         int_val = interior(s)
 
-        expected = (TimeNodeSet(elements=[TimeNode('v', 1, 4)]),\
+        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 1, 4)]),\
                     TimeNodeSet(elements=[TimeNode('u', 1, 4), TimeNode('y', 2, 4), TimeNode('x', 1, 3)]))
         assert(int_val == expected)
 
@@ -78,7 +78,7 @@ class TestInterior:
         # int_val = interior(s, X, X)
         int_val = interior(s)
 
-        expected = (TimeNodeSet(elements=[TimeNode('v', 2, 4)]),\
+        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 2, 4)]),\
                     TimeNodeSet(elements=[TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4)]))
         assert(int_val == expected)
 
@@ -94,6 +94,6 @@ class TestInterior:
 
         int_val = interior(s)
 
-        expected = (TimeNodeSet(elements=[TimeNode('v', 2, 4), TimeNode('v', 5, 6) ]),\
+        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 2, 4), TimeNode('v', 5, 6) ]),\
                     TimeNodeSet(elements=[TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4), TimeNode('u', 5, 6), TimeNode('y', 5, 6), TimeNode('x', 5, 6)]))
         assert(int_val == expected)

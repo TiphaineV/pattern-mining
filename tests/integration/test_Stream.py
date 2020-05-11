@@ -16,7 +16,7 @@ class TestStream:
     @pytest.fixture
     def test_stream(self):
         s = Stream()
-        s.readStream("./tests/integration/fixtures/ChangingNeighbours-StSa-Copy1.json")
+        s.readStream("./tests/integration/fixtures/ChangingNeighbours-StSa.json")
         return s
     
     def test_label_simple(self, test_stream):

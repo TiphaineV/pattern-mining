@@ -1,0 +1,54 @@
+{
+"settings": {
+    "bipartite": 1,
+    "weighted": 0,
+    "directed": 0,
+    "attributed": 0
+},
+"T": {
+    "alpha": 0,
+    "omega": 10
+},
+"V": {
+    "left": ["u", "x", "y"],
+    "right": ["v"]
+},
+"W": {},
+"E": [
+        {
+            "b": 1,
+            "e": 5,
+            "u": "u",
+            "v": "v",
+            "label" : {
+                "left": ["a", "b", "c", "d"],
+                "right": ["w", "x"],
+            }
+        },
+        {
+            "b": 1,
+            "e": 3,
+            "u": "x",
+            "v": "v",
+            "label" : {
+                "left": ["a", "b", "c"],
+                "right": ["w", "x"],
+            }
+        },
+        {
+            "b": 2,
+            "e": 4,
+            "u": "y",
+            "v": "v",
+            "label": {
+                "left": ["a", "b", "d"],
+                "right": ["w", "x"]
+            }
+
+        }
+],
+"I": {
+        "left": ["a", "b", "c", "d"],
+        "right": ["w", "x", "y", "z"]
+     }
+}
