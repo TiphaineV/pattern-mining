@@ -138,10 +138,10 @@ class Stream:
         
         return data
     
-    def writeStream(self):
+    def writeStream(self, name="out.json"):
         data = { "T": self.T, "V": self.V, "W": self.W, "E": self.E }
         
-        json.dump(data, open("./out.json", "w+"))
+        json.dump(data, open(name, "w+"))
     
     def label(self, x):
         """
