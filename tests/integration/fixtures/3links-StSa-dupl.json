@@ -46,5 +46,6 @@
             "label_u": "abc",
             "label_v": "bcd"
         }
-]
+],
+"I": ["a", "b", "c", "d"]
 }
