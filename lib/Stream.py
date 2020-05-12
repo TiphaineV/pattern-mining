@@ -128,6 +128,7 @@ class Stream:
         self.V = set(data["V"])
         self.W = TimeNodeSet()
         self.E = []
+        self.I = data["I"]
         
         for link in data["E"]:
             t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label_u"])
@@ -351,8 +352,6 @@ class BipartiteStream(Stream):
             self.W.add(t_u)
             self.W.add(t_v)
             self.add_link(link)
-        
-        return data
     
     def writeStream(self, name="out.json"):
         data = { "settings": {}, "I": self.I, "T": self.T, "V": self.V, "W": self.W, "E": self.E }

@@ -288,6 +288,7 @@ def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None
             # (mono)Pattern case
             pattern_x.add(x)
 
+        print(pattern_x.lang)
         # Support set of q_x
         X = pattern_x.extent(S=S)
 
