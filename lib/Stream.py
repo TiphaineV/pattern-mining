@@ -273,8 +273,8 @@ class BipartiteStream(Stream):
         label_u = l["label"]["left"]
         label_v = l["label"]["right"]
 
-        self.V["left"].add(u)
-        self.V["right"].add(v)
+        # self.V["left"].add(u)
+        # self.V["right"].add(v)
         
         # Maintain temporal adjacency list 
         try:
@@ -307,8 +307,8 @@ class BipartiteStream(Stream):
         self.T = { "alpha": 0, "omega": 10 }
         
         for (i, link) in enumerate(links):
-            self.V["left"].add(link["u"])
-            self.V["right"].add(link["v"])
+            # self.V["left"].add(link["u"])
+            # self.V["right"].add(link["v"])
             
             u = link["u"]
             v = link["v"]
@@ -408,7 +408,7 @@ class BipartiteStream(Stream):
 
                 if u.b == v.b and u.e == v.e:
                     new_l = {
-                        "u":u.node,
+                        "u": u.node,
                         "v": v.node,
                         "b": u.b,
                         "e": u.e,
