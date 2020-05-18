@@ -13,7 +13,7 @@ class TimeNode:
         return Interval(self.b, self.e)
         
     def __str__(self):
-        return f"{self.node} [{self.b}, {self.e}]"
+        return f"{self.node};[{self.b},{self.e}]"
 
     def __repr__(self):
         return self.__str__()

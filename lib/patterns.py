@@ -123,7 +123,9 @@ class BiPattern:
         return BiPattern(copy.deepcopy(self.lang), self.support_set.copy())
     
     def __str__(self):
-        return f"{self.lang['left']}, {self.lang['right']} {self.support_set.W}"
+        lang_left = "|".join(map(str, self.lang['left']))
+        lang_right = "|".join(map(str, self.lang['right']))
+        return f"{lang_left}, {lang_right} {self.support_set.W}"
         
     def __repr__(self):
         return self.__str__()
@@ -256,6 +258,7 @@ def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None
     S = pattern.support_set
     
     glob_stream.bipatterns_list.append((pattern, parent))
+
     print(pattern, file=stream.bip_fp)
     # print(f"{q} {S}", file=stream.bip_fp)
     
