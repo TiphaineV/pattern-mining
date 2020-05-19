@@ -71,6 +71,9 @@ class Interval:
         else:
             return self, x
 
+    def __eq__(self, o):
+        return self.b == o.b and self.e == o.e
+
     def __str__(self):
         return f"[{self.b}, {self.e}]"
 
