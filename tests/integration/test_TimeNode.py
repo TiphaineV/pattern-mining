@@ -103,3 +103,18 @@ class TestTimeNodeSet:
             ])
 
         assert(W.union(W2) == expected)
+
+    def test_set_disjoint_union(self):
+        W = TimeNodeSet(elements=[
+                TimeNode("u", 2, 4)
+            ])
+        W2 = TimeNodeSet(elements=[
+                TimeNode("u", 5, 7)
+            ])
+
+        expected = TimeNodeSet(elements=[
+                TimeNode("u", 2, 4),
+                TimeNode("u", 5, 7)
+            ])
+
+        assert(W.union(W2) == expected)
