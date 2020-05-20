@@ -56,3 +56,50 @@ class TestTimeNodeSet:
     def test_len(self):
         W = TimeNodeSet()
         assert(len(W) == 0)
+
+    def test_add_empty(self):
+        W = TimeNodeSet()
+        W.add(TimeNode("u", 2,4))
+
+        expected = TimeNodeSet(elements=[TimeNode("u", 2, 4)])
+
+        assert(W == expected)
+
+    def test_add_existing(self):
+        W = TimeNodeSet(elements=[TimeNode("u", 1, 3)])
+        W.add(TimeNode("u", 2,4))
+
+        expected = TimeNodeSet(elements=[TimeNode("u", 1, 4)])
+
+        assert(W == expected)
+
+    def test_set_intersection(self):
+        W = TimeNodeSet(elements=[
+                TimeNode("u", 2, 4)
+            ])
+        W2 = TimeNodeSet(elements=[
+                TimeNode("u", 3, 5),
+                TimeNode("v", 1, 6)
+            ])
+
+        expected = TimeNodeSet(elements=[
+                TimeNode("u", 3, 4)
+            ])
+
+        assert(W.intersection(W2) == expected)
+
+    def test_set_union(self):
+        W = TimeNodeSet(elements=[
+                TimeNode("u", 2, 4)
+            ])
+        W2 = TimeNodeSet(elements=[
+                TimeNode("u", 3, 5),
+                TimeNode("v", 1, 6)
+            ])
+
+        expected = TimeNodeSet(elements=[
+                TimeNode("u", 2, 5),
+                TimeNode("v", 1, 6)
+            ])
+
+        assert(W.union(W2) == expected)
