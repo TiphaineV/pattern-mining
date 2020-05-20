@@ -222,20 +222,3 @@ class TimeNodeSet:
     def __repr__(self):
         return str(self.__str__())
 
-if __name__ == '__main__':
-    s = TimeNodeSet(elements=[
-            TimeNode("u", 2, 4, set()),
-            TimeNode("x", 2, 5, set())
-        ])
-
-    s2 = TimeNodeSet(elements=[
-            TimeNode("x", 2, 3, set()),
-            TimeNode("x", 4, 5, set())
-        ])
-    # x = TimeNode("u", 1, 3, set(["lol"]))
-    # x2 = TimeNode("u", 2, 3, set(["lol"]))
-    # x3 = TimeNode("u", 2, 5, set(["lol"]))
-    # x4 = TimeNode("u", 8, 9, set())
-    # s.add(x)
-    # s.add(x2)
-    # s.add(x3)
