@@ -45,7 +45,7 @@ class Pattern:
         X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q.issubset(set(x["label_v"]))]
         
         X = X1 + X2
-        X = TimeNodeSet(elements=X)
+        X = TimeNodeSet(X)
         return X
     
     def elements(self):
@@ -113,7 +113,7 @@ class BiPattern:
         X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q["right"].issubset(set(x["label"]["right"]))]
         
         X = X1 + X2
-        X = TimeNodeSet(elements=X)
+        X = TimeNodeSet(X)
         return X
     
     def copy(self):

@@ -82,13 +82,24 @@ class Interval:
 
 class TimeNodeSet:
 
-    def __init__(self, elements=[]):
+    def __init__(self, *args):
         """
             elements: list of TimeNodes
         """
+        
+        if len(args) == 0:
+            _elements = []
+        elif len(args) == 1:
+            if type(args[0]) is not list:
+                raise TypeError
+            
+            _elements = args[0]
+        else:
+            raise TooManyArgsError
+
         self.elements = {}
 
-        for w in elements:
+        for w in _elements:
             self.add(w)
 
     def __iter__(self):

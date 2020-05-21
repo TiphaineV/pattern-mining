@@ -31,7 +31,7 @@ class TestStream:
             
     def test_substream_simple(self, test_stream):
         s = test_stream
-        mini_W = TimeNodeSet(elements=[
+        mini_W = TimeNodeSet([
                 TimeNode("u", s.T["alpha"], s.T["omega"]),
                 TimeNode("v", s.T["alpha"], s.T["omega"]),
                 TimeNode("x", s.T["alpha"], s.T["omega"]),
@@ -41,7 +41,7 @@ class TestStream:
         expected = Stream()
         expected.T = {"alpha": 0, "omega":10}
         expected.V = set("uvx")
-        expected.W = TimeNodeSet(elements=[
+        expected.W = TimeNodeSet([
                 TimeNode("u", 1, 5),
                 TimeNode("v", 1, 5),
                 TimeNode("x", 1, 3)

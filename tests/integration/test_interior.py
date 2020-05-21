@@ -28,13 +28,13 @@ class TestInterior:
         # X2 = [TimeNode(x["v"], x["b"], x["e"]) for x in s.E ]
 
         # X = X1 + X2
-        # X = TimeNodeSet(elements=X)
+        # X = TimeNodeSet([X)
         # s.W = X
         # int_val = interior(s, X, X)
         int_val = interior(s)
 
-        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 2, 3), TimeNode('v', 4, 5)]),\
-                    TimeNodeSet(elements=[TimeNode('u', 2, 3), TimeNode('y', 4, 5), TimeNode('u', 4, 5), TimeNode('y', 2, 3)]))
+        expected = s.substream(TimeNodeSet([TimeNode('v', 2, 3), TimeNode('v', 4, 5)]),\
+                    TimeNodeSet([TimeNode('u', 2, 3), TimeNode('y', 4, 5), TimeNode('u', 4, 5), TimeNode('y', 2, 3)]))
         assert(int_val == expected)
 
 
@@ -51,13 +51,13 @@ class TestInterior:
         # X2 = [TimeNode(x["v"], x["b"], x["e"]) for x in s.E ]
 
         # X = X1 + X2
-        # X = TimeNodeSet(elements=X)
+        # X = TimeNodeSet([X)
         # s.W = X
         # int_val = interior(s, X, X)
         int_val = interior(s)
 
-        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 1, 4)]),\
-                    TimeNodeSet(elements=[TimeNode('u', 1, 4), TimeNode('y', 2, 4), TimeNode('x', 1, 3)]))
+        expected = s.substream(TimeNodeSet([TimeNode('v', 1, 4)]),\
+                    TimeNodeSet([TimeNode('u', 1, 4), TimeNode('y', 2, 4), TimeNode('x', 1, 3)]))
         assert(int_val == expected)
 
     @pytest.mark.datafiles(
@@ -73,13 +73,13 @@ class TestInterior:
         # X2 = [TimeNode(x["v"], x["b"], x["e"]) for x in s.E ]
 
         # X = X1 + X2
-        # X = TimeNodeSet(elements=X)
+        # X = TimeNodeSet([X)
         # s.W = X
         # int_val = interior(s, X, X)
         int_val = interior(s)
 
-        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 2, 4)]),\
-                    TimeNodeSet(elements=[TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4)]))
+        expected = s.substream(TimeNodeSet([TimeNode('v', 2, 4)]),\
+                    TimeNodeSet([TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4)]))
         assert(int_val == expected)
 
     @pytest.mark.datafiles(
@@ -94,6 +94,6 @@ class TestInterior:
 
         int_val = interior(s)
 
-        expected = s.substream(TimeNodeSet(elements=[TimeNode('v', 2, 4), TimeNode('v', 5, 6) ]),\
-                    TimeNodeSet(elements=[TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4), TimeNode('u', 5, 6), TimeNode('y', 5, 6), TimeNode('x', 5, 6)]))
+        expected = s.substream(TimeNodeSet([TimeNode('v', 2, 4), TimeNode('v', 5, 6) ]),\
+                    TimeNodeSet([TimeNode('u', 2, 4), TimeNode('y', 2, 4), TimeNode('x', 2, 4), TimeNode('u', 5, 6), TimeNode('y', 5, 6), TimeNode('x', 5, 6)]))
         assert(int_val == expected)

@@ -174,7 +174,7 @@ class Stream:
         subs.V = set([x.node for x in  W1 ] + [x.node for x in W2])
         W = W1.union(W2)
         subs.W = self.W.intersection(W) #  eee ?
-        subs.W = TimeNodeSet(elements=subs.W)
+        subs.W = TimeNodeSet(subs.W.values())
         subs.E = []
         subs.degrees = { u: [] for u in subs.V }
         
@@ -184,7 +184,7 @@ class Stream:
             t_u = TimeNode(l["u"], l["b"], l["e"])
             t_v = TimeNode(l["v"], l["b"], l["e"])
 
-            cap = TimeNodeSet(elements=[t_u, t_v]).intersection(subs.W).values()
+            cap = TimeNodeSet([t_u, t_v]).intersection(subs.W).values()
 
             if len(cap) == 2:
                 u, v = cap[0], cap[1]
@@ -389,7 +389,7 @@ class BipartiteStream(Stream):
         subs.V["right"] = set([x.node for x in  W1 if x.node in self.V["right"] ] + [x.node for x in W2 if x.node in self.V["right"] ])
         W = W1.union(W2)
         subs.W = self.W.intersection(W) #  eee ?
-        subs.W = TimeNodeSet(elements=subs.W)
+        subs.W = TimeNodeSet(subs.W)
         subs.E = []
         subs.degrees = { u: [] for u in list(subs.V["left"]) + list(subs.V["right"]) }
         
@@ -401,7 +401,7 @@ class BipartiteStream(Stream):
             label_left = set(l["label"]["left"])
             label_right = set(l["label"]["right"])
 
-            cap = TimeNodeSet(elements=[t_u, t_v]).intersection(subs.W).values()
+            cap = TimeNodeSet([t_u, t_v]).intersection(subs.W).values()
 
             if len(cap) == 2:
                 u, v = cap[0], cap[1]

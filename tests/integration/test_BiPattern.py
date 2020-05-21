@@ -76,7 +76,7 @@ class TestBiPattern:
         bp.lang = {"left": set("abd"), "right": set("wx")}
         
         result = bp.extent(test_stream) 
-        expected = TimeNodeSet(elements=[
+        expected = TimeNodeSet([
                 TimeNode("u", 1, 5),
                 TimeNode("y", 2, 4),
                 TimeNode("v", 1, 5)
