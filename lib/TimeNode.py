@@ -91,11 +91,12 @@ class TimeNodeSet:
             _elements = []
         elif len(args) == 1:
             if type(args[0]) is not list:
-                raise TypeError
+                raise TypeError("TimeNodeSet only accepts a list of TimeNode as argument")
             
             _elements = args[0]
         else:
-            raise TooManyArgsError
+            # There can only be 0 or 1 arg
+            raise NotImplementedError("TimeNodeSet can only have 0 or 1 argument.")
 
         self.elements = {}
 
