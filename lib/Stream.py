@@ -388,14 +388,23 @@ class BipartiteStream(Stream):
         subs.V["left"] = set([x.node for x in  W1 if x.node in self.V["left"] ] + [x.node for x in W2 if x.node in self.V["left"] ])
         subs.V["right"] = set([x.node for x in  W1 if x.node in self.V["right"] ] + [x.node for x in W2 if x.node in self.V["right"] ])
         W = W1.union(W2)
-        subs.W = self.W.intersection(W) #  eee ?
-        subs.W = TimeNodeSet(subs.W)
+        subs.W = self.W.intersection(W) 
+        # subs.W = TimeNodeSet()
+        # subs.W = self.W.intersection(W)
+        # subs.W = TimeNodeSet(subs.W.values())
         subs.E = []
         subs.degrees = { u: [] for u in list(subs.V["left"]) + list(subs.V["right"]) }
         
         for l in self.E:
             # It is necessary to truncate the link if it only partially
             # intersects with subs.W
+
+            # If both nodes are not in subs.W, we can stop
+            if (l["u"] not in subs.V["left"]) or\
+                (l["v"] not in subs.V["right"]):
+                    continue
+
+
             t_u = TimeNode(l["u"], l["b"], l["e"])
             t_v = TimeNode(l["v"], l["b"], l["e"])
             label_left = set(l["label"]["left"])
