@@ -198,10 +198,11 @@ class TimeNodeSet:
                             new_x2 = TimeNode(node, union_val[1].b, union_val[1].e, label)
                             union_set.add(new_x)
                             union_set.add(new_x2)
+                            break
                         else:
                             new_x = TimeNode(node, union_val.b, union_val.e, label)
                             union_set.add(new_x)
-
+                            break
                         # No else case, if there is nor intersection nor inclusion,
                         # then it's not in the intersection :)
 
