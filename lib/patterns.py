@@ -260,18 +260,18 @@ def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None
     glob_stream.bipatterns_list.append((pattern, parent))
 
     print(pattern, file=stream.bip_fp)
-    # print(f"{q} {S}", file=stream.bip_fp)
     
-    # Rewrite this in minus
+    # Rewrite this in minus (TODO: Not working ??)
     # XXX
     lang = S.I
     lang = [ S.label(x) for x in S.W.values() ]
     lang = [item for sublist in lang for item in list(sublist) if item not in pattern.elements() and item not in S.EL ]
+#     lang = [item for item in lang if item not in pattern.elements() and item not in S.EL ]
     candidates = set(lang)
     
     # bak variables are necessary so that deeper recursion levels do not modify the current object
     pattern_bak = pattern.copy()
-
+    
     for x in candidates:
         # S is not reduced between candidates at the same level of the search tree
         pattern_x = pattern_bak.copy()
@@ -302,7 +302,6 @@ def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None
         # S_x = interior(self, S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
         S_x = subs.core_property.interior(subs)
         p_x = patternClass(pattern_x.lang, S_x)
-
         if len(p_x.support_set.W) >= s:
             p_x.lang = p_x.intent() # S_x.intent([ S_x.label(x) for x in S_x.W.values() ])
             langs = p_x.elements().intersection(stream.EL)
