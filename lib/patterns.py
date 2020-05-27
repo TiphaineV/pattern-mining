@@ -230,6 +230,8 @@ def bipatterns(stream, s=2):
     pattern = BiPattern({ "left": set(), "right": set() }, S)
     pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
     enum(stream, pattern, set(), s=s, glob_stream=stream, patternClass=BiPattern)
+    
+    return stream.bipatterns_list
 
 def patterns(stream, s=2):  
     """
