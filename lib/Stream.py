@@ -140,7 +140,7 @@ class Stream:
         return data
     
     def writeStream(self, name="out.json"):
-        data = { "T": self.T, "V": self.V, "W": self.W, "E": self.E }
+        data = { "T": self.T, "V": self.V, "W": self.W, "E": self.E, "I": self.I }
         
         json.dump(data, open(name, "w+"))
     
@@ -391,7 +391,6 @@ class BipartiteStream(Stream):
         subs.W = self.W.intersection(W) 
         # subs.W = TimeNodeSet()
         # subs.W = self.W.intersection(W)
-        # subs.W = TimeNodeSet(subs.W.values())
         subs.E = []
         subs.degrees = { u: [] for u in list(subs.V["left"]) + list(subs.V["right"]) }
         
@@ -403,7 +402,6 @@ class BipartiteStream(Stream):
             if (l["u"] not in subs.V["left"]) or\
                 (l["v"] not in subs.V["right"]):
                     continue
-
 
             t_u = TimeNode(l["u"], l["b"], l["e"])
             t_v = TimeNode(l["v"], l["b"], l["e"])
