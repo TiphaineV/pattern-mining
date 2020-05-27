@@ -21,7 +21,7 @@ def jaccard(s, u, v):
 
     return inter / union
 
-def bipattern_similarity(s, p, q):
+def bipattern_distance(s, p, q):
     """
         s: the stream graph on which the patterns are enumerated
         p,q: two Patterns or BiPatterns
@@ -47,7 +47,7 @@ def _is_close( p, s, stream_g, beta) :
         otherwise.
     """
     i = 0
-    while( len(s) > i and bipattern_similarity(stream_g, p, s[i]) <= beta ) :
+    while( len(s) > i and bipattern_distance(stream_g, p, s[i]) > beta ) :
         i+= 1
     return (i < len(s))
 
