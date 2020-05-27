@@ -21,7 +21,7 @@ def jaccard(s, u, v):
 
     return inter / union
 
-def bipattern_similarity(s, p, q):
+def bipattern_distance(s, p, q):
     """
         s: the stream graph on which the patterns are enumerated
         p,q: two Patterns or BiPatterns
@@ -39,3 +39,54 @@ def bipattern_similarity(s, p, q):
     score_bot = len(W1[1].intersection(W2[1])) / len(W1[1].union(W2[1]))
     
     return 1 - min(score_top, score_bot)
+
+def _is_close( p, s, stream_g, beta) :
+    """
+        Returns True if the pattern p is at a distance less than
+        beta from at least one pattern in the s list, and False
+        otherwise.
+    """
+    i = 0
+    while( len(s) > i and bipattern_distance(stream_g, p, s[i]) > beta ) :
+        i+= 1
+    return (i < len(s))
+
+def _find_first_distant_patt_pos( f, s, stream_g, beta ) :
+    """
+        Returns the position in the list of candidate patterns f of
+        the first pattern which is at a distance greater than beta
+        from all the patterns already selected in s
+    """
+    i = 0
+    while( len(f) > i and _is_close( f[i], s, stream_g, beta)):
+        i += 1
+    return(i)
+
+def g_beta_selection( p_list, stream_g, beta) :
+    """
+        Selects from the ordered list of patterns p a sub-list in
+        which each any pairs of selected patterns are at a distance
+        greater than beta.
+    
+        p_list : ordered list of patterns
+        stream_g: the stream graph on which the patterns are enumerated
+        dist_func : function such that dist_func( p[i], p[j])
+            returns a distance for any i,j < len(p) - ie for any
+            pair of patterns taken from p.
+        beta : distance threshold
+        
+        @return: a selection of patterns, subset of p_list
+    """
+    f = p_list.copy() # copy of the list of ordered patterns on which the selection is done
+    s = [] # list of selected patterns
+    while( 0 < len(f)):
+        # position in the list of candidate patterns of
+        # the first pattern which is at a distance greater
+        # than beta from all the patterns already selected
+        pos_next = _find_first_distant_patt_pos( f, s, stream_g, beta )
+        # 
+        if( pos_next < len(f) ):
+            s.append(f[pos_next]) # Adds the found pattern to the selected patterns list s.
+        f = f[ pos_next + 1 : ] # Removes from the candidate list f all previous patterns that
+                                # are close to at least one of the patterns already selected
+    return s
