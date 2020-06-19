@@ -3,6 +3,8 @@ import sys
 import logging
 # from lib.StreamProperties import StreamStarSat
 from lib.TimeNode import *
+from lib.visualization.FigPrinter import *
+from IPython.display import Image
 
 class Stream:
     def __init__(self, lang=set(), _loglevel=logging.DEBUG, _fp=sys.stdout):
@@ -38,6 +40,35 @@ class Stream:
     def nodes(self):
         # iterator on nodes ?
         return self.V
+    
+    def draw(self, node_clusters=[]):
+        import subprocess
+        import os
+        import random
+        import string
+        letters = string.ascii_lowercase
+        tmp_fname = "tmp_"
+        tmp_fname += ''.join(random.choice(letters) for i in range(5))
+
+        os.path.dirname(os.path.realpath(__file__)) 
+
+        s = FigPrinter(alpha=self.T["alpha"], omega=self.T["omega"], streaming=False)
+        for u in self.nodes():
+            s.addNode(u)
+        for e in self.E:
+            s.addLink(e["u"], e["v"], e["b"], e["e"])
+
+        # s.addTimeLine(ticks=2)
+        s.optimize()
+        s.save(tmp_fname + ".fig")
+        
+        cmnd = f"fig2dev -Lpng {tmp_fname}.fig {tmp_fname}.png"
+        try:
+            subprocess.check_call(cmnd, shell=True)
+        except subprocess.CalledProcessError as e:
+            print(e)
+
+        return Image(f"{tmp_fname}.png")
     
     def copy(self):
         stream_copy = Stream(lang=self.I, _fp=self.bip_fp)
@@ -250,7 +281,7 @@ class BipartiteStream(Stream):
 
     def nodes(self):
         # iterator on nodes ?
-        return self.V["left"], self.V["right"]
+        return self.V["left"].union(self.V["right"])
     
     def copy(self):
         stream_copy = Stream(lang=self.I, _fp=self.bip_fp)
@@ -300,6 +331,7 @@ class BipartiteStream(Stream):
     
     def setCoreProperty(self, prop):
         self.core_property = prop
+        
     
     def add_links(self, links):
         self.E = links

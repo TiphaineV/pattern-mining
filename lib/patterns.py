@@ -245,6 +245,8 @@ def patterns(stream, s=2):
     pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
     enum(stream, pattern, set(), s=s, glob_stream=stream, patternClass=Pattern)
 
+    return stream.bipatterns_list
+    
 def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None, patternClass=None):
     """
         Internal routine for pattern enumeration.
