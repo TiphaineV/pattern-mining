@@ -125,7 +125,7 @@ Letter\n\
 100.00\n\
 Single\n\
 -2\n\
-1200 2\n"""
+1200 2"""
         if self._streaming:
             print(header)
 
@@ -795,6 +795,7 @@ Single\n\
                     self.printNodeCluster(nc)
                 
                 self.addTimeLine(ticks=2)
+            self._out_fp.close()
                 
 
 
