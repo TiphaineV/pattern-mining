@@ -61,8 +61,7 @@ class Stream:
         # s.addTimeLine(ticks=2)
         s.optimize()
         s.save(tmp_fname + ".fig")
-        
-        cmnd = f"fig2dev -Lpng {tmp_fname}.fig {tmp_fname}.png"
+        cmnd = f"fig2dev -Lpng {tmp_fname}.fig > {tmp_fname}.png"
         try:
             subprocess.check_call(cmnd, shell=True)
         except subprocess.CalledProcessError as e:

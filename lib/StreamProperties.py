@@ -32,6 +32,51 @@ class BHACore(StreamProperty):
         
         return degree >= self.a and pattern
 
+class StreamBHACore(StreamProperty):
+    def __init__(self, stream, h=2, a=2):
+        super().__init__(stream)
+        self.h = h
+        self.a = a
+        # Ensure that BipartiteStream ?
+        
+    def interior(self, s, X=None, Y=None):
+        # Define nodesets
+        if X is None and Y is None:
+            X = s.V["left"]
+            Y = s.V["right"]
+        hub = TimeNodeSet()
+        authority = TimeNodeSet()
+            
+        for k, u in enumerate(s.degrees):
+            if u in X:
+                threshold = self.h
+            else:
+                threshold = self.a
+                
+            neigh = set()
+            last_times = {} # {u: -1 for u in s.degrees}
+            for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
+                v, t, ev_type = i[0], i[1], i[2]
+                # First check if the property is true
+                bha_is_true = len(neigh) >= threshold
+
+                if ev_type == 1:
+                    neigh.add(v)
+                    last_times[v] = t
+                    if not bha_is_true:
+                        # While the property is true (typically, we have degree > THRESHOLD)
+                        # u remains star, so we should not change the times
+                        last_times[u] = t
+                else:
+                    neigh.remove(v)
+                    if bha_is_true:
+                        if u in X:
+                            hub.add(TimeNode(u, last_times[u], t))
+                        else:
+                            authority.add(TimeNode(u, last_times[u], t))
+        
+        return s.substream(hub, authority)
+        
 class StreamStarSat(StreamProperty):
     
     def __init__(self, stream, threshold=3):
