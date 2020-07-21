@@ -53,6 +53,14 @@ class Pattern:
     def copy(self):
         return Pattern(self.lang.copy(), self.support_set.copy())
     
+    def json(self):
+        json_repr = {
+            "lang": self.lang,
+            "support_set": self.support_set.json()
+        }
+
+        return json_repr
+
     def __str__(self):
         return f"{self.lang} {self.support_set.W}"
         
