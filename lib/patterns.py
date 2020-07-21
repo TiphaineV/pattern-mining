@@ -201,6 +201,7 @@ def patterns(stream, s=2):
         Enumerates all patterns
     """
     stream.EL = set()
+    excl_list = set()
     stream.bipatterns_list = []
     # S = interior(self, _top, _bot, set())
     S = stream.core_property.interior(stream)
@@ -210,7 +211,7 @@ def patterns(stream, s=2):
 
     return stream.bipatterns_list
     
-def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None, patternClass=None):
+def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stream=None, patternClass=None):
     """
         Internal routine for pattern enumeration.
         Should not be called outside of patterns/bipatterns ?
@@ -228,21 +229,18 @@ def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None
 
     print(pattern, file=stream.bip_fp)
     
-    # Rewrite this in minus (TODO: Not working ??)
-    # XXX
-    lang = S.I
     lang = [ S.label(x) for x in S.W.values() ]
-    lang = [item for sublist in lang for item in list(sublist) if item not in pattern.elements() and item not in S.EL ]
-#     lang = [item for item in lang if item not in pattern.elements() and item not in S.EL ]
+    lang = [item for sublist in lang for item in list(sublist) if item not in pattern.elements() ]
+    # lang = stream.I
     candidates = set(lang)
     
     # bak variables are necessary so that deeper recursion levels do not modify the current object
     pattern_bak = pattern.copy()
-    
+    # print(candidates)
     for x in candidates:
         # S is not reduced between candidates at the same level of the search tree
-        pattern_x = pattern_bak.copy()
-        S = pattern_bak.support_set.copy() # (S_bak[0].copy(), S_bak[1].copy())
+        pattern_x = patternClass(pattern_bak.lang.copy(), pattern_bak.support_set.copy())
+        S = pattern_x.support_set
 
         # Add candidate to pattern
         if patternClass is BiPattern:
@@ -256,32 +254,34 @@ def enum(stream, pattern, EL=set(), depth=0, s=2, parent=set(), glob_stream=None
             pattern_x.add(x, side)
         else:
             # (mono)Pattern case
+            # print("Adding " + str(x), str(depth))
             pattern_x.add(x)
-
-        # Support set of q_x
+        
+        # Support set (extent) of q_x
         X = pattern_x.extent(S=S)
-
         S_x = (X.intersection(S.W), X.intersection(S.W))
 
-        subs = stream.substream(S_x[0], S_x[1])
+        subs = S.substream(S_x[0], S_x[1])
+        subs.I = S.I
         subs.setCoreProperty(stream.core_property)
-        subs.EL = stream.EL
-        # S_x = interior(self, S_x[0], S_x[1], q_x) # p(S\cap ext(add(q, x)))
+        subs.EL = glob_stream.EL
+
+        # Compute the new interior
         S_x = subs.core_property.interior(subs)
         p_x = patternClass(pattern_x.lang, S_x)
-        if len(p_x.support_set.W) >= s:
+        if len(list(p_x.support_set.W)) >= s:
+            # Get intent of the new pattern
             p_x.lang = p_x.intent() # S_x.intent([ S_x.label(x) for x in S_x.W.values() ])
-            langs = p_x.elements().intersection(stream.EL)
-
+            langs = p_x.elements().intersection(excl_list)
+            
             if len(langs) == 0 and p_x.lang != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
-                # pattern_x = Pattern(q_x, S_x)
-
-                # print(f"{prefix} Calling enum with {pattern_x.lang} ({S_x})")
-                enum(subs, p_x, stream.EL, depth+1, parent=q, glob_stream=glob_stream, patternClass=patternClass)
+                # print(f"{prefix} Calling enum with {pattern_x.lang}")
+                enum(subs, p_x, excl_list.copy(), depth+1, parent=q, glob_stream=glob_stream, patternClass=patternClass)
                 
                 # We reached a leaf of the recursion tree, add item to exclusion list
                 # print(f"{prefix} Adding {x} to EL")
-                stream.EL.add(x)
-                
+                # glob_stream.EL.add(x)
+                excl_list.add(x)
+
 def fp_close(self):
     self.bip_fp.close()
