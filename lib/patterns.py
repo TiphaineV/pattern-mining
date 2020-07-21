@@ -23,11 +23,10 @@ class Pattern:
             Returns the intent of a pattern
         """
         
-        langs = [ self.support_set.label(x) for x in self.support_set.W.values() ]
+        langs = [ self.support_set.label(x) for x in self.support_set.W.values() if len(self.support_set.label(x)) > 0 ]
         
         if langs == []:
             langs = [set()]
-
         return set.intersection(*langs)
 
     def extent(self, S=None):
@@ -41,8 +40,8 @@ class Pattern:
         else:
             S = (S.E, S.E)
             
-        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in S[0] if q.issubset(set(x["label_u"]))]
-        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q.issubset(set(x["label_v"]))]
+        X1 = [ TimeNode(x["u"], x["b"], x["e"], _label=set(x["label_u"])) for x in S[0] if q.issubset(set(x["label_u"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"], _label=set(x["label_v"])) for x in S[1] if q.issubset(set(x["label_v"]))]
         
         X = X1 + X2
         X = TimeNodeSet(X)
