@@ -178,51 +178,7 @@ def interior(s):
         or will default to the generic algorithm if there is no such function
     """
     prop = s.core_property
-    # print(type(prop))
-    #if type(prop) is StreamProperties.StreamStarSat:
     return prop.interior(s)
-    #else:
-    #    raise Error
-
-def get_stars_sats(s, threshold=1):
-    """
-        Interior function for star satellite, modify to return a stream instead ?
-        @param s: a stream graph
-        @return: two TimeNodeSets, each containing the k-stars and k-satellites of s
-    """
-
-    THRESHOLD = threshold
-    stars = TimeNodeSet()
-    satellites = TimeNodeSet()
-
-    for k, u in enumerate(s.degrees):
-        neigh = set()
-        best_neighs = set()
-        last_times = {} # {u: -1 for u in s.degrees}
-        for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
-            v, t, ev_type = i[0], i[1], i[2]
-            # First check if the property is true
-            starsat_is_true = len(neigh) >= THRESHOLD
-            
-            if starsat_is_true:
-                best_neighs = best_neighs.union(neigh)
-
-            if ev_type == 1:
-                neigh.add(v)
-                last_times[v] = t
-                if not starsat_is_true:
-                    # While the property is true (typically, we have degree > THRESHOLD)
-                    # u remains star, so we should not change the times
-                    last_times[u] = t
-            else:
-                neigh.remove(v)
-                if starsat_is_true:
-                    stars.add(TimeNode(u, last_times[u], t))
-                    for x in best_neighs:
-                        # min sur le t aussi ? 
-                        satellites.add(TimeNode(x, max(last_times[x], last_times[u]), t))
-                    best_neighs = set()
-    return stars, satellites
 
 
 def bipatterns(stream, s=2):
