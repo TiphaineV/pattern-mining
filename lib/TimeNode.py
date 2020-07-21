@@ -12,6 +12,18 @@ class TimeNode:
     def interval(self):
         return Interval(self.b, self.e)
         
+    def json(self):
+        """
+            Returns a JSON representation of a TimeNode
+        """
+
+        return {
+            "node": self.node,
+            "b": self.b,
+            "e": self.e,
+            "label": list(self.label)
+        }
+
     def __str__(self):
         return f"{self.node};[{self.b},{self.e}]"
 
@@ -113,6 +125,12 @@ class TimeNodeSet:
             Two TimeNodeSets are equal if they contain the same elements
         """
         return all([x in o for x in self])
+
+    def json(self):
+        """
+            Returns a JSON representation
+        """
+        return [ x.json() for x in self.values() ]
                 
     def nodes(self):
         return self.elements.keys()
@@ -214,15 +232,15 @@ class TimeNodeSet:
         return new
 
     def __len__(self):
-        return len(self.values())
+        return len(list(self.values()))
 
     # @property
     def values(self):
         values = []
         for w in self.elements:
             for i in self.elements[w]:
-                values.append(TimeNode(w, i[0].b, i[0].e, set()))
-        return values
+                # values.append(TimeNode(w, i[0].b, i[0].e, set()))
+                yield TimeNode(w, i[0].b, i[0].e, set())
     # Define iter and next properly
     # def __iter__(self):
 
