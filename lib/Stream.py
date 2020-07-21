@@ -18,12 +18,6 @@ class Stream:
         self.bipatterns_list = []
         self.EL = set()
         
-        # Language
-#         if type(lang) is set:
-#             self.patternClass = Pattern
-#         else:
-#             self.patternClass = BiPattern
-        
         self.I = lang
         
         # Store both degree view and links (times) view,
@@ -34,6 +28,17 @@ class Stream:
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
     
+    def json(self):
+        json_repr = {
+            "T": self.T,
+            "V": list(self.V),
+            "W": [ x.json() for x in self.W.values()],
+            "E": self.E,
+            "I": list(self.I)
+        }
+
+        return json_repr
+
     def __eq__(self, o):
         return self.T == o.T and self.V == o.V and self.W == o.W and self.E == o.E
 
@@ -204,7 +209,7 @@ class Stream:
         subs.V = set([x.node for x in  W1 ] + [x.node for x in W2])
         W = W1.union(W2)
         subs.W = self.W.intersection(W) #  eee ?
-        subs.W = TimeNodeSet(subs.W.values())
+        subs.W = TimeNodeSet(list(subs.W.values()))
         subs.E = []
         subs.degrees = { u: [] for u in subs.V }
         
@@ -214,7 +219,7 @@ class Stream:
             t_u = TimeNode(l["u"], l["b"], l["e"])
             t_v = TimeNode(l["v"], l["b"], l["e"])
 
-            cap = TimeNodeSet([t_u, t_v]).intersection(subs.W).values()
+            cap = list(TimeNodeSet([t_u, t_v]).intersection(subs.W).values())
 
             if len(cap) == 2:
                 u, v = cap[0], cap[1]
@@ -439,7 +444,7 @@ class BipartiteStream(Stream):
             label_left = set(l["label"]["left"])
             label_right = set(l["label"]["right"])
 
-            cap = TimeNodeSet([t_u, t_v]).intersection(subs.W).values()
+            cap = list(TimeNodeSet([t_u, t_v]).intersection(subs.W).values())
 
             if len(cap) == 2:
                 u, v = cap[0], cap[1]
