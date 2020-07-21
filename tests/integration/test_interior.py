@@ -2,7 +2,7 @@ import pytest
 
 from lib.Stream import Stream, TimeNode, TimeNodeSet
 from lib.StreamProperties import StreamStarSat
-from lib.patterns import interior, get_stars_sats
+from lib.patterns import interior
 import logging
 import os
 import ujson
