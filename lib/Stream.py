@@ -199,7 +199,10 @@ class Stream:
                     labels.append(set(label))
                 else:
                     b_val = None
-        return set.union(*labels)
+        if len(labels) == 0:
+            return set()
+        else:
+            return set.union(*labels)
     
     def substream(self, W1, W2):
         # W1, W2: [(u, b,e), (v, b',e'), etc.]
