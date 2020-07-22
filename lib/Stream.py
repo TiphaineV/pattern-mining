@@ -60,8 +60,10 @@ class Stream:
         s = FigPrinter(alpha=self.T["alpha"], omega=self.T["omega"], streaming=False)
         for u in self.nodes():
             s.addNode(u)
+            
+        curvings = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]
         for e in self.E:
-            s.addLink(e["u"], e["v"], e["b"], e["e"])
+            s.addLink(e["u"], e["v"], e["b"], e["e"], curving=random.choice(curvings))
 
         # s.addTimeLine(ticks=2)
         s.optimize()
@@ -183,6 +185,7 @@ class Stream:
         """
             Returns the label associated to an element of W
         """
+        labels = []
         v = x.node
         b, e = x.b, x.e
         
@@ -193,10 +196,10 @@ class Stream:
                 b_val = t
             if b_val is not None and ev_type == -1:
                 if b_val <= e <= t:
-                    return set(label)
+                    labels.append(set(label))
                 else:
                     b_val = None
-        return set()
+        return set.union(*labels)
     
     def substream(self, W1, W2):
         # W1, W2: [(u, b,e), (v, b',e'), etc.]
@@ -288,11 +291,12 @@ class BipartiteStream(Stream):
         return self.V["left"].union(self.V["right"])
     
     def copy(self):
-        stream_copy = Stream(lang=self.I, _fp=self.bip_fp)
+        stream_copy = BipartiteStream(_fp=self.bip_fp)
         stream_copy.T = self.T
         stream_copy.V = self.V.copy()
         stream_copy.W = self.W.copy()
         stream_copy.E = self.E.copy()
+        stream_copy.I = self.I.copy()
         stream_copy.degrees = self.degrees.copy()
         stream_copy.times = self.times.copy()
         stream_copy.EL = self.EL.copy()
@@ -393,25 +397,6 @@ class BipartiteStream(Stream):
         data = { "settings": {}, "I": self.I, "T": self.T, "V": self.V, "W": self.W, "E": self.E }
         
         json.dump(data, open(name, "w+"))
-    
-    def label(self, x):
-        """
-            Returns the label associated to an element of W
-        """
-        v = x.node
-        b, e = x.b, x.e
-        
-        # Iterate over neighborhood to find label
-        b_val = None
-        for u, t, ev_type, label in self.degrees[v]:
-            if t <= e and ev_type == 1:
-                b_val = t
-            if b_val is not None and ev_type == -1:
-                if b_val <= e <= t:
-                    return set(label)
-                else:
-                    b_val = None
-        return set()
     
     def substream(self, W1, W2):
         # W1, W2: [(u, b,e), (v, b',e'), etc.]

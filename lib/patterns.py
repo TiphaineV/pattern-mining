@@ -180,6 +180,20 @@ def interior(s):
     prop = s.core_property
     return prop.interior(s)
 
+def check_patterns(pattern_list):
+    """
+        Perform some basic sanity checks on a (bi)pattern list,
+        to ensure its validity.
+    """
+    # Ensure all patterns enumerated are unique
+    num_patterns = len(pattern_list)
+    unique_patterns = len([ frozenset(p[0].lang) for p in pattern_list ])
+    print(num_patterns, unique_patterns)
+    
+    # Ensure all patterns are more specific than their parent
+    for p in pattern_list:
+        assert(len(p[0].lang) >= len(p[1]))
+
 
 def bipatterns(stream, s=2):
     """
@@ -236,7 +250,6 @@ def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stre
     
     # bak variables are necessary so that deeper recursion levels do not modify the current object
     pattern_bak = pattern.copy()
-    # print(candidates)
     for x in candidates:
         # S is not reduced between candidates at the same level of the search tree
         pattern_x = patternClass(pattern_bak.lang.copy(), pattern_bak.support_set.copy())
