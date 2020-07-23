@@ -188,13 +188,13 @@ def check_patterns(pattern_list):
     # Ensure all patterns enumerated are unique
     num_patterns = len(pattern_list)
     unique_patterns = len([ frozenset(p[0].lang) for p in pattern_list ])
-    print(num_patterns, unique_patterns)
+    unicity = (num_patterns == unique_patterns)
     
     # Ensure all patterns are more specific than their parent
-    for p in pattern_list:
-        assert(len(p[0].lang) >= len(p[1]))
+    specificity = all([ len(p[0].lang) >= len(p[1]) for p in pattern_list ])
 
-
+    return unicity and specificity
+    
 def bipatterns(stream, s=2):
     """
         Enumerates all bipatterns
