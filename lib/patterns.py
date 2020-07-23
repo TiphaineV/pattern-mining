@@ -127,7 +127,7 @@ class BiPattern:
         """
             Returns a copy of the current BiPattern object.
         """
-        return BiPattern(copy.deepcopy(self.lang), self.support_set.copy())
+        return BiPattern(copy.copy(self.lang), self.support_set.copy())
     
     def __str__(self):
         lang_left = "|".join(map(str, self.lang['left']))
@@ -252,10 +252,11 @@ def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stre
     pattern_bak = pattern.copy()
     for x in candidates:
         # S is not reduced between candidates at the same level of the search tree
-        pattern_x = patternClass(pattern_bak.lang.copy(), pattern_bak.support_set.copy())
+        pattern_x = patternClass(copy.deepcopy(pattern_bak.lang), pattern_bak.support_set.copy())
         S = pattern_x.support_set
 
         # Add candidate to pattern
+        # print("Adding " + str(x) + " to " + str(pattern_x.lang), str(depth))
         if patternClass is BiPattern:
             # If Bipattern we need to identify the side to which the candidate belongs
             if x in stream.I["left"]:
@@ -267,11 +268,11 @@ def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stre
             pattern_x.add(x, side)
         else:
             # (mono)Pattern case
-            # print("Adding " + str(x), str(depth))
             pattern_x.add(x)
         
         # Support set (extent) of q_x
         X = pattern_x.extent(S=S)
+        # print(f"{pattern_x.lang} has extent {list(X)}")
         S_x = (X.intersection(S.W), X.intersection(S.W))
 
         subs = S.substream(S_x[0], S_x[1])
