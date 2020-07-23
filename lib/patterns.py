@@ -243,6 +243,9 @@ def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stre
 
     print(pattern, file=stream.bip_fp)
     
+    # Let us restrict the set of candidates. While it is at most I,
+    # however, elements of I that do not appear in the support set S of the pattern cannot be potential
+    # candidates. 
     lang = [ S.label(x) for x in S.W.values() ]
     lang = [item for sublist in lang for item in list(sublist) if item not in pattern.elements() ]
     # lang = stream.I
