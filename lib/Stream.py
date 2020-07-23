@@ -199,7 +199,6 @@ class Stream:
                     labels.append(set(label))
                 else:
                     b_val = None
-        
         if len(labels) == 0:
             return set()
         else:
