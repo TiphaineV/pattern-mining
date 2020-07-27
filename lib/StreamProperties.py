@@ -39,7 +39,38 @@ class StreamBHACore(StreamProperty):
         self.a = a
         # Ensure that BipartiteStream ?
         
+    
+    def find_bicore(self, stream, threshold=2):
+
+        hubs = TimeNodeSet()
+
+        for u in stream.degrees:
+            neighbourhood = set()
+            last_t = {}
+
+            for v,t,e_type,label in sorted(stream.degrees[u], key=operator.itemgetter(1, 2, -3)):
+                if e_type == 1:
+                    neighbourhood.add(v)
+                    last_t[u] = t
+                    last_t[v] = t
+                elif e_type == -1:
+                    if len(neighbourhood) >= threshold:
+                        # print(u, len(neighbourhood), last_t[u], t)
+                        hubs.add(TimeNode(u, last_t[u], t))
+                        hubs.add(TimeNode(v, last_t[v], t))
+                    neighbourhood.remove(v)
+
+        # print(len(hubs), len(stream.W))
+        return stream.substream(hubs, hubs)
+
     def interior(self, s, X=None, Y=None):
+        hubs = self.find_bicore(s, threshold=self.h)
+        authorities = self.find_bicore(hubs, threshold=self.a)
+
+        return authorities
+
+
+    def interior_bak(self, s, X=None, Y=None):
         # Define nodesets
         if X is None and Y is None:
             X = s.V["left"]
