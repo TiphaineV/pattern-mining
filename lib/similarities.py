@@ -24,21 +24,37 @@ def jaccard(s, u, v):
 def bipattern_distance(s, p, q):
     """
         s: the stream graph on which the patterns are enumerated
-        p,q: two Patterns or BiPatterns
+        p,q: two BiPatterns
         @return: the similarity between two patterns.
     """
     
-    top, bot = s.V["left"], s.V["right"]
     
+    top, bot = s.V["left"], s.V["right"]
     get_w = lambda p: (TimeNodeSet([x for x in p.support_set.W if x.node in top]), TimeNodeSet([x for x in p.support_set.W if x.node in bot]))
     
     W1 = get_w(p)
     W2 = get_w(q)
     
-    score_top = len(W1[0].intersection(W2[0])) / len(W1[0].union(W2[0]))
-    score_bot = len(W1[1].intersection(W2[1])) / len(W1[1].union(W2[1]))
+    score_top = len(W[0].intersection(W2[0])) / len(W1[0].union(W2[0]))
     
     return 1 - min(score_top, score_bot)
+
+def pattern_distance(s, p, q):
+    """
+        s: the stream graph on which the patterns are enumerated
+        p,q: two Patterns
+        @return: the similarity between two patterns.
+    """
+    
+    nodeset = s.V
+    get_w = lambda p: TimeNodeSet([x for x in p.support_set.W if x.node in nodeset])
+    
+    W1 = get_w(p)
+    W2 = get_w(q)
+        
+    score = len(W1.intersection(W2)) / len(W1.union(W2))
+    
+    return 1 - score
 
 def _is_close( p, s, stream_g, beta) :
     """
@@ -46,8 +62,14 @@ def _is_close( p, s, stream_g, beta) :
         beta from at least one pattern in the s list, and False
         otherwise.
     """
+    
+    if not "Bipartite" in str(type(stream_g)):
+        distance_func = pattern_distance
+    else:
+        distance_func = bipattern_distance
+    
     i = 0
-    while( len(s) > i and bipattern_distance(stream_g, p, s[i]) > beta ) :
+    while( len(s) > i and distance_func(stream_g, p, s[i]) > beta ) :
         i+= 1
     return (i < len(s))
 

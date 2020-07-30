@@ -74,7 +74,7 @@ class Stream:
         except subprocess.CalledProcessError as e:
             print(e)
 
-        return Image(f"{tmp_fname}.png")
+        return tmp_fname, Image(f"{tmp_fname}.png")
     
     def copy(self):
         stream_copy = Stream(lang=self.I, _fp=self.bip_fp)
@@ -161,6 +161,22 @@ class Stream:
     def readStream(self, filepath):
         fp = open(filepath)
         data = json.load(fp)
+        self.T = data["T"]
+        self.V = set(data["V"])
+        self.W = TimeNodeSet()
+        self.E = []
+        self.I = data["I"]
+        
+        for link in data["E"]:
+            t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label_u"])
+            t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label_v"])
+            self.W.add(t_u)
+            self.W.add(t_v)
+            self.add_link(link)
+        
+        return data
+    
+    def loadJson(self, data):
         self.T = data["T"]
         self.V = set(data["V"])
         self.W = TimeNodeSet()
