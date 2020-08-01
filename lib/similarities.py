@@ -35,7 +35,8 @@ def bipattern_distance(s, p, q):
     W1 = get_w(p)
     W2 = get_w(q)
     
-    score_top = len(W[0].intersection(W2[0])) / len(W1[0].union(W2[0]))
+    score_top = len(W1[0].intersection(W2[0])) / len(W1[0].union(W2[0]))
+    score_bot = len(W1[1].intersection(W2[1])) / len(W1[1].union(W2[1]))
     
     return 1 - min(score_top, score_bot)
 

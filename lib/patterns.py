@@ -1,4 +1,5 @@
 from lib.TimeNode import TimeNode, TimeNodeSet
+from lib.Stream import *
 from lib.StreamProperties import *
 import operator
 from lib.errors import *
@@ -75,11 +76,12 @@ class BiPattern:
     """
         Bipattern class
     """
-    def __init__(self, _lang={ "left": set(), "right": set() }, _support_set=set()):
+    def __init__(self, _lang={ "left": [], "right": [] }, _support_set=set()):
         self.lang = _lang
         self.support_set = _support_set
     
     def json(self):
+        print(type(self.support_set))
         json_repr = {
             "lang": { "left": list(self.lang["left"]), "right": list(self.lang["right"]) },
             "support_set": self.support_set.json()
@@ -204,20 +206,28 @@ def check_patterns(pattern_list):
 
     return unicity and specificity
     
-def load_patterns(filepath):
+def load_patterns(filepath, bipartite=False):
     """
         Load patterns from a previous run, that have been exported in JSON format,
         using Pattern's self.json() method.
     """
     
+    if bipartite:
+        streamClass = BipartiteStream
+        patternClass = BiPattern
+    else:
+        streamClass = Stream
+        patternClass = Pattern
+    print(streamClass)
+
     patterns_list = []
     res_file = open(filepath)
     for line in res_file:
         line = line.replace("'", "\"")
         data = json.loads(line.strip())
-        tmp_stream = Stream()
+        tmp_stream = streamClass()
         tmp_stream.loadJson(data["support_set"])
-        p = Pattern(data["lang"], tmp_stream)
+        p = patternClass(data["lang"], tmp_stream)
         patterns_list.append(p)
 
     return patterns_list
