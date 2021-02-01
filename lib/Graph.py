@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import logging
+import copy
 
 class Property():
     def __init__(self, graph):
@@ -33,26 +34,22 @@ class BHACore(Property):
         return degree >= self.a and pattern
 
 class StarSat(Property):
-    def __init__(self, graph):
+    def __init__(self, graph, threshold=3):
         super(StarSat, self).__init__(graph)
         self.G = graph
-        self.star_degree = 3  # 2*3 because we are using DiGraphs
+        self.star_degree = threshold * 2 # 2*3 because we are using DiGraphs
 
-    def p1(self, x, Z1, Z2, pattern):
-        # star : deg > 3
+    def p1(self, x, Z1, Z2):
+        # star : deg >= 3
         subg = self.G.subgraph(Z1.union(Z2))
         deg = subg.degree(x)
-        pattern = pattern.issubset(self.G.nodes[x]["lang"])
-        
-        return deg >= self.star_degree and pattern
+        return deg >= self.star_degree
 
-    def p2(self, x, Z1, Z2, pattern):
+    def p2(self, x, Z1, Z2):
         subg = self.G.subgraph(Z1.union(Z2))
-        pattern = pattern.issubset(self.G.nodes[x]["lang"])
-        
-        return any([ subg.degree(i) >= self.star_degree for i in subg.neighbors(x)]) and pattern
+        return any([ subg.degree(i) >= self.star_degree for i in subg.neighbors(x)])
     
-class BiPattern:
+class GraphBiPattern:
     # TODO: Refactoring
     def __init__(self):
         self.left_pattern = set()
@@ -73,17 +70,54 @@ class BiPattern:
             self.left_pattern.add(x)
         else:
             self.right_pattern.add(x)
-    
 
+class GraphPattern:
+    def __init__(self, _lang=set(), _support_set=set()):
+        self.lang = _lang
+        self.support_set = _support_set
+    
+    def elements(self):
+        return self.lang
+    
+    def intent(self):
+        labels = [self.support_set.nodes[u]["lang"] for u in self.support_set.nodes() if len(self.support_set.nodes[u]["lang"]) > 0]
+        
+        if labels == []:
+            labels = [set()]
+        
+        return set.intersection(*labels)
+    
+    def extent(self, S=None):
+        q = self.lang
+        
+        if S is None:
+            S = self.support_set
+        else:
+            S = S # a graph
+            
+        return S.subgraph([x for x in S.nodes() if q.issubset(S.nodes[x]["lang"])])
+    
+    def add(self, x):
+        self.lang.add(x)
+    
+    def minus(self, I):
+        return list(set(I).difference(self.lang))
+    
+    def copy(self):
+        return GraphPattern(self.lang.copy(), self.support_set.copy())
+    
+    def __str__(self):
+        return ",".join(self.lang) + ";" + ",".join(map(str, self.support_set.nodes()))
+        
 class Graph(nx.DiGraph):
-    def __init__(self, edges=[(1,2)], lang_left=set(), lang_right=set(), _loglevel=logging.WARN):
+    def __init__(self, edges=[(1,2)], lang=set(), _loglevel=logging.WARN):
         super().__init__(edges)
-        self.I = (lang_left, lang_right)
+        self.I = lang
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
 
-    def interior(self, X1, X2, patterns=(set(), set())):
-        prop = BHACore(self)
+    def interior(self, X1, X2):
+        prop = StarSat(self, threshold=3)
         
         S1 = X1
         S2 = X2
@@ -96,75 +130,61 @@ class Graph(nx.DiGraph):
             Z2 = S2.copy()
 
             for x in Z1:
-                if not prop.p1(x, Z1, Z2, patterns[0]):
+                if not prop.p1(x, Z1, Z2):
                     S1.remove(x)
 
             for x in Z2:
-                if not prop.p2(x, Z1, Z2, patterns[1]):
+                if not prop.p2(x, Z1, Z2):
                     S2.remove(x)
             
             if S1 == Z1 or S2 == Z2:
                 break 
+        # Add attributes to differentiate stars from satellites?
+        return self.subgraph(S1.union(S2))
 
-        return S1, S2
 
-    def _int(self, left, right):
-        """
-            Both left and right are sets (multisets?) for the language
-        """
-#         print(f"_int: {type(left)} {left}, {type(right)} {right}")
-        if left == []:
-            left = [set()]
-        if right == []:
-            right = [set()]
-        return set.intersection(*left), set.intersection(*right)
+def graph_patterns(graph, s=2):
+    G = graph.interior(set(graph.nodes()), set(graph.nodes()).copy())
+    p = GraphPattern(set(), G)
+    p.lang = p.intent()
+    graph_enum(graph, p, s=2, EL=set())
     
-    def _ext(self, left, right):
-        # Returns support set of a bipattern
-        pass
-    
-    def _minus(self, I, q):
-        
-        candidates_left = [(x, 0) for x in I[0].difference(q[0]) ]
-        candidates_right = [(x, 1) for x in I[1].difference(q[1]) ]
-        
-        return set(candidates_left + candidates_right)
-    
-    def bipatterns(self, _top, _bot):
-        S = self.interior(_top, _bot, (set(), set()))
-        self.enum(self._int([self.nodes[x]["lang"] for x in S[0]], [self.nodes[x]["lang"] for x in S[1]]), S, set())
-        
-    def _add(self, item, q, side=0):
-        _q = (q[0].copy(), q[1].copy())
-        if side == 0:
-            _q[0].add(item)
-        else:
-            _q[1].add(item)
-        return _q
-        
-    def enum(self, q, S, EL=set(), depth=0):
-        s = 2
-        print(q, S, depth)
-        #if depth >= 5:
-        #   return
-#         q = S
-        candidates = [x for x in self._minus(self.I, q) if not x in EL]
-        self.logger.debug(f'candidats: {candidates}')
-        S_bak = (S[0].copy(), S[1].copy())
-        for x in candidates:
-            # S is not reduced between candidates at the same level of the search tree
-            S = (S_bak[0].copy(), S_bak[1].copy())
-            # print(f'S: {S}, S_bak: {S_bak}')
-            # Extension
-            q_x = self._add(x[0], q, side = x[1])
-            self.logger.debug(f'\nConsidering [{x[0]}] q\'={q_x}')
-            # Support set of q_x
-            S_x = self.interior(S[0], S[1], q_x) # interior(S \cap ext(q))
-            #print(f'q_x={q_x} has support set S_x = {S_x}')
-            if len(S_x[0].union(S_x[1])) >= s: # Union not sum in case it is not strictly bipartite
-                q_x = self._int([ self.nodes[x]["lang"] for x in S_x[0] ] , [ self.nodes[x]["lang"] for x in S_x[1] ])
-                if len(q_x[0].intersection(EL)) == 0 and len(q_x[1].intersection(EL)) == 0:
-                    #print(f'Call on {(q_x, S_x, EL)}')
-                    self.enum(q_x, S_x, EL, depth+1)
-                    EL.add(x)
 
+def graph_enum(graph, pattern, s=2, EL=set()):
+    q = pattern.lang
+    
+    print(q, graph.nodes())
+
+    candidates = [x for x in pattern.minus(graph.I) if not x in EL]
+    
+    pattern_bak = pattern.copy()
+    for x in candidates:
+        # S is not reduced between candidates at the same level of the search tree
+        pattern_x = GraphPattern(copy.deepcopy(pattern_bak.lang), pattern_bak.support_set.copy())
+        S = pattern_x.support_set
+
+        # Add candidate to pattern
+        # print("Adding " + str(x) + " to " + str(pattern_x.lang), str(depth))
+        pattern_x.add(x)
+        
+        # Support set (extent) of q_x
+        subs = pattern_x.extent(S=S)
+
+        subs.I = S.I
+
+        # Compute the new interior
+        S_x = subs.interior(set(subs.nodes()), set(subs.nodes()).copy())
+        p_x = GraphPattern(pattern_x.lang, S_x)
+        if len(list(p_x.support_set.nodes())) >= s:
+            # Get intent of the new pattern
+            p_x.lang = p_x.intent() # S_x.intent([ S_x.label(x) for x in S_x.W.values() ])
+            langs = p_x.elements().intersection(EL)
+            
+            if len(langs) == 0 and p_x.lang != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
+                # print(f"{prefix} Calling enum with {pattern_x.lang}")
+                graph_enum(subs, p_x, EL.copy())
+                
+                # We reached a leaf of the recursion tree, add item to exclusion list
+                # print(f"{prefix} Adding {x} to EL")
+                # glob_stream.EL.add(x)
+                EL.add(x)
