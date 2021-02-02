@@ -94,7 +94,7 @@ class GraphPattern:
             S = self.support_set
         else:
             S = S # a graph
-            
+        
         return S.subgraph([x for x in S.nodes() if q.issubset(S.nodes[x]["lang"])])
     
     def add(self, x):
@@ -110,11 +110,12 @@ class GraphPattern:
         return ",".join(self.lang) + ";" + ",".join(map(str, self.support_set.nodes()))
         
 class Graph(nx.DiGraph):
-    def __init__(self, edges=[(1,2)], lang=set(), _loglevel=logging.WARN):
+    def __init__(self, edges=[], lang=set(), _loglevel=logging.WARN):
         super().__init__(edges)
         self.I = lang
         self.logger = logging.getLogger()
         self.logger.setLevel(_loglevel)
+        self.pattern_list = []
 
     def interior(self, X1, X2):
         prop = StarSat(self, threshold=3)
@@ -147,13 +148,14 @@ def graph_patterns(graph, s=2):
     G = graph.interior(set(graph.nodes()), set(graph.nodes()).copy())
     p = GraphPattern(set(), G)
     p.lang = p.intent()
-    graph_enum(graph, p, s=2, EL=set())
+    graph_enum(graph, p, s=2, EL=set(), graph_obj=graph)
     
 
-def graph_enum(graph, pattern, s=2, EL=set()):
+def graph_enum(graph, pattern, s=2, EL=set(), graph_obj=None):
     q = pattern.lang
     
     print(q, graph.nodes())
+    graph_obj.pattern_list.append(pattern)
 
     candidates = [x for x in pattern.minus(graph.I) if not x in EL]
     
@@ -161,7 +163,7 @@ def graph_enum(graph, pattern, s=2, EL=set()):
     for x in candidates:
         # S is not reduced between candidates at the same level of the search tree
         pattern_x = GraphPattern(copy.deepcopy(pattern_bak.lang), pattern_bak.support_set.copy())
-        S = pattern_x.support_set
+        S = pattern_x.support_set.copy()
 
         # Add candidate to pattern
         # print("Adding " + str(x) + " to " + str(pattern_x.lang), str(depth))
@@ -182,9 +184,8 @@ def graph_enum(graph, pattern, s=2, EL=set()):
             
             if len(langs) == 0 and p_x.lang != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
                 # print(f"{prefix} Calling enum with {pattern_x.lang}")
-                graph_enum(subs, p_x, EL.copy())
+                graph_enum(subs, p_x, EL.copy(), graph_obj=graph)
                 
                 # We reached a leaf of the recursion tree, add item to exclusion list
                 # print(f"{prefix} Adding {x} to EL")
-                # glob_stream.EL.add(x)
                 EL.add(x)
