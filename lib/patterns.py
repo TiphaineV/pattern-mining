@@ -55,6 +55,20 @@ class Pattern:
     def copy(self):
         return Pattern(self.lang.copy(), self.support_set.copy())
     
+
+    @staticmethod
+    def from_json(obj):
+        p = Pattern()
+        q = set(obj["lang"])
+        support_set = Stream()
+        support_set.loadJson(obj["support_set"])
+
+        p.lang = q
+        p.support_set = support_set 
+
+        return p
+
+
     def json(self):
         json_repr = {
             "lang": list(self.lang),
@@ -237,7 +251,7 @@ def bipatterns(stream, s=2):
         Enumerates all bipatterns
     """
     stream.EL = set()
-    stream.bipatterns_list = []
+    stream.pattern_list = []
     # S = interior(self, _top, _bot, set())
     S = stream.core_property.interior(stream)
 #     pattern = Pattern(set(), S)
@@ -245,7 +259,7 @@ def bipatterns(stream, s=2):
     pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
     enum(stream, pattern, set(), s=s, glob_stream=stream, patternClass=BiPattern)
     
-    return stream.bipatterns_list
+    return stream.pattern_list
 
 def patterns(stream, s=2):  
     """
@@ -253,14 +267,14 @@ def patterns(stream, s=2):
     """
     stream.EL = set()
     excl_list = set()
-    stream.bipatterns_list = []
+    stream.pattern_list = []
     # S = interior(self, _top, _bot, set())
     S = stream.core_property.interior(stream)
     pattern = Pattern(set(), S)
     pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
     enum(stream, pattern, set(), s=s, glob_stream=stream, patternClass=Pattern)
 
-    return stream.bipatterns_list
+    return stream.pattern_list
     
 def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stream=None, patternClass=None):
     """
@@ -276,7 +290,7 @@ def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stre
     q = pattern.lang
     S = pattern.support_set
     
-    glob_stream.bipatterns_list.append((pattern, parent))
+    glob_stream.pattern_list.append((pattern, parent))
 
     print(pattern, file=stream.bip_fp)
     

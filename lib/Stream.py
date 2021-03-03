@@ -15,7 +15,7 @@ class Stream:
         self.core_property = None
         
         self.bip_fp = _fp
-        self.bipatterns_list = []
+        self.pattern_list = []
         self.EL = set()
         
         self.I = lang
@@ -38,7 +38,8 @@ class Stream:
                     "v": e["v"],
                     "b": e["b"],
                     "e": e["e"],
-                    "label": list(e["label"])
+                    "label_u": list(e["label_u"]),
+                    "label_v": list(e["label_v"])
                 } for e in self.E ],
             "I": list(self.I)
         }
