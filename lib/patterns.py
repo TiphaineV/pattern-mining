@@ -5,6 +5,8 @@ import operator
 from lib.errors import *
 import copy
 import ujson as json
+import ipdb
+from operator import itemgetter
 
 class Pattern:
     """
@@ -37,16 +39,17 @@ class Pattern:
         """
         q = self.lang
         
-        if S is None:
-            S = (self.support_set.E, self.support_set.E)
-        else:
-            S = (S.E, S.E)
+        # if S is None:
+            # S = (self.support_set.E, self.support_set.E)
+        # else:
+            # S = (S.E, S.E)
             
-        X1 = [ TimeNode(x["u"], x["b"], x["e"], _label=set(x["label_u"])) for x in S[0] if q.issubset(set(x["label_u"]))]
-        X2 = [ TimeNode(x["v"], x["b"], x["e"], _label=set(x["label_v"])) for x in S[1] if q.issubset(set(x["label_v"]))]
+        X1 = [ TimeNode(x["u"], x["b"], x["e"], _label=set(x["label_u"])) for x in S.E if q.issubset(set(x["label_u"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"], _label=set(x["label_v"])) for x in S.E if q.issubset(set(x["label_v"]))]
         
         X = X1 + X2
         X = TimeNodeSet(X)
+
         return X
     
     def elements(self):
@@ -95,7 +98,6 @@ class BiPattern:
         self.support_set = _support_set
     
     def json(self):
-        print(type(self.support_set))
         json_repr = {
             "lang": { "left": list(self.lang["left"]), "right": list(self.lang["right"]) },
             "support_set": self.support_set.json()
@@ -110,6 +112,8 @@ class BiPattern:
             self.lang["right"].add(item)
         
     def minus(self, I):
+        assert(len(self.lang["left"]) <= len(I["left"]))
+        assert(len(self.lang["right"]) <= len(I["right"]))
         return set([ x for x in set(I["left"]).difference(self.lang["left"]) ]), set([ x for x in set(I["right"]).difference(self.lang["right"]) ])
     
     def elements(self):
@@ -136,28 +140,30 @@ class BiPattern:
         """
         q = self.lang
         
-        if S is None:
-            S = (self.support_set.E, self.support_set.E)
-        else:
-            S = (S.E, S.E)
-            
-        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in S[0] if q["left"].issubset(set(x["label"]["left"]))]
-        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S[1] if q["right"].issubset(set(x["label"]["right"]))]
+        # for x in S.E:
+            # if len(q["left"]) > 0 and len(x["label"]["left"]) > 0:
+                # assert(list(q["left"])[0][0] == list(x["label"]["left"])[0][0])
+            # if len(q["right"]) > 0 and len(x["label"]["right"]) > 0:
+                # assert(list(q["right"])[0][0] == list(x["label"]["right"])[0][0])
+
+        X1 = [ TimeNode(x["u"], x["b"], x["e"]) for x in S.E if q["left"].issubset(set(x["label"]["left"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"]) for x in S.E if q["right"].issubset(set(x["label"]["right"]))]
         
         X = X1 + X2
         X = TimeNodeSet(X)
+
         return X
     
     def copy(self):
         """
             Returns a copy of the current BiPattern object.
         """
-        return BiPattern(copy.copy(self.lang), self.support_set.copy())
+        return BiPattern(copy.deepcopy(self.lang), self.support_set.copy())
     
     def __str__(self):
         lang_left = "|".join(map(str, self.lang['left']))
         lang_right = "|".join(map(str, self.lang['right']))
-        return f"{lang_left}, {lang_right} {self.support_set.W}"
+        return f"{lang_left}, {lang_right} {str(list(self.support_set.W))}"
         
     def __repr__(self):
         return self.__str__()
@@ -257,7 +263,7 @@ def bipatterns(stream, s=2):
 #     pattern = Pattern(set(), S)
     pattern = BiPattern({ "left": set(), "right": set() }, S)
     pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
-    enum(stream, pattern, set(), s=s, glob_stream=stream, patternClass=BiPattern)
+    enum(stream, pattern, set(), min_support_size=s, glob_stream=stream, patternClass=BiPattern)
     
     return stream.pattern_list
 
@@ -272,11 +278,14 @@ def patterns(stream, s=2):
     S = stream.core_property.interior(stream)
     pattern = Pattern(set(), S)
     pattern.lang = pattern.intent() # Pattern(stream.intent([stream.label(x) for x in stream.W.values()]),S)
-    enum(stream, pattern, set(), s=s, glob_stream=stream, patternClass=Pattern)
+    enum(stream, pattern, set(), min_support_size=s, glob_stream=stream, patternClass=Pattern)
 
     return stream.pattern_list
     
-def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stream=None, patternClass=None):
+
+DEPTH_STREAM = {}
+
+def enum(stream, pattern, excl_list=set(), depth=0, min_support_size=2, parent=set(), glob_stream=None, patternClass=None):
     """
         Internal routine for pattern enumeration.
         Should not be called outside of patterns/bipatterns ?
@@ -292,59 +301,73 @@ def enum(stream, pattern, excl_list=set(), depth=0, s=2, parent=set(), glob_stre
     
     glob_stream.pattern_list.append((pattern, parent))
 
-    print(pattern, file=stream.bip_fp)
+    # json.dump(pattern.json(), glob_stream.bip_fp)
+    print(pattern, file=glob_stream.bip_fp)
+    # ipdb.set_trace()
+    # print(",", file=glob_stream.bip_fp)
+
     
     # Let us restrict the set of candidates. While it is at most I,
     # however, elements of I that do not appear in the support set S of the pattern cannot be potential
     # candidates. 
-    lang = [ S.label(x) for x in S.W.values() ]
-    lang = [item for sublist in lang for item in list(sublist) if item not in pattern.elements() ]
+    # lang = [ S.label(x) for x in S.W.values() ]
+    # lang = [item for sublist in lang for item in list(sublist) if item not in pattern.elements() ]
+    # candidates = set(lang)
     # lang = stream.I
-    candidates = set(lang)
+    top_cand, bot_cand = pattern.minus(stream.I) 
+    sort_crit = lambda x: len(x)
+    candidates = [ (x, 0) for x in top_cand if not x in excl_list ] + [ (x, 1) for x in bot_cand if not x in excl_list ]
+
+    # print(len(pattern.lang), len(pattern.support_set.W), len(pattern.support_set.V), len(pattern.support_set.E))
+    # print(len(candidates), depth)
     
     # bak variables are necessary so that deeper recursion levels do not modify the current object
     pattern_bak = pattern.copy()
-    for x in candidates:
+    # for x, side in sorted(candidates, key=sort_crit(itemgetter(0))):
+    for x, side in candidates:
         # S is not reduced between candidates at the same level of the search tree
         pattern_x = patternClass(copy.deepcopy(pattern_bak.lang), pattern_bak.support_set.copy())
-        S = pattern_x.support_set
+        supp_set = pattern_x.support_set
 
         # Add candidate to pattern
         # print("Adding " + str(x) + " to " + str(pattern_x.lang), str(depth))
         if patternClass is BiPattern:
-            # If Bipattern we need to identify the side to which the candidate belongs
-            if x in stream.I["left"]:
-                side = 0
-            elif x in stream.I["right"]:
-                side = 1
-            else:
-                raise LanguageError("aha", "Element was not found in language set(s).")
             pattern_x.add(x, side)
         else:
             # (mono)Pattern case
             pattern_x.add(x)
         
         # Support set (extent) of q_x
-        X = pattern_x.extent(S=S)
+        # print(f"Getting extent of {pattern_x.lang}")
+        X = pattern_x.extent(S=stream)
         # print(f"{pattern_x.lang} has extent {list(X)}")
-        S_x = (X.intersection(S.W), X.intersection(S.W))
+        S_x = (X.intersection(stream.W).copy(), X.intersection(stream.W).copy())
 
-        subs = S.substream(S_x[0], S_x[1])
-        subs.I = S.I
+        # print(f"Getting intersected substream of {pattern_x.lang}")
+        subs = stream.substream(S_x[0], S_x[1])
+        # print(f"subs size is {len(subs.W)}")
+        # subs.I = copy.deepcopy(S.I) # already set in substream()
         subs.setCoreProperty(stream.core_property)
-        subs.EL = glob_stream.EL
+        subs.EL = copy.deepcopy(glob_stream.EL)
 
         # Compute the new interior
+        # print(f"Getting interior of {pattern_x.lang}")
         S_x = subs.core_property.interior(subs)
-        p_x = patternClass(pattern_x.lang, S_x)
-        if len(list(p_x.support_set.W)) >= s:
+        # print(S_x.I)
+        # print(f"s_x size is {len(S_x.W)}")
+        
+        p_x = patternClass(copy.deepcopy(pattern_x.lang), S_x.copy())
+
+        if len(list(p_x.support_set.W)) >= min_support_size:
             # Get intent of the new pattern
+            # print(f"added lang: {p_x.lang}")
             p_x.lang = p_x.intent() # S_x.intent([ S_x.label(x) for x in S_x.W.values() ])
+            # print(f"new lang: {p_x.lang}")
             langs = p_x.elements().intersection(excl_list)
             
             if len(langs) == 0 and p_x.lang != q: #(q_x != q and not (S_x[0] == S[0] and S_x[1] == S[1])):                     
                 # print(f"{prefix} Calling enum with {pattern_x.lang}")
-                enum(subs, p_x, excl_list.copy(), depth+1, parent=q, glob_stream=glob_stream, patternClass=patternClass)
+                enum(subs, p_x, copy.deepcopy(excl_list), depth+1, parent=q, glob_stream=glob_stream, patternClass=patternClass)
                 
                 # We reached a leaf of the recursion tree, add item to exclusion list
                 # print(f"{prefix} Adding {x} to EL")

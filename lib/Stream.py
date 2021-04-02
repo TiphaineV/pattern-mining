@@ -1,3 +1,4 @@
+import copy
 import ujson as json
 import sys
 import logging
@@ -86,12 +87,12 @@ class Stream:
     def copy(self):
         stream_copy = Stream(lang=self.I, _fp=self.bip_fp)
         stream_copy.T = self.T
-        stream_copy.V = self.V.copy()
-        stream_copy.W = self.W.copy()
-        stream_copy.E = self.E.copy()
-        stream_copy.degrees = self.degrees.copy()
-        stream_copy.times = self.times.copy()
-        stream_copy.EL = self.EL.copy()
+        stream_copy.V = copy.deepcopy(self.V)
+        stream_copy.W = copy.deepcopy(self.W)
+        stream_copy.E = copy.deepcopy(self.E)
+        stream_copy.degrees = copy.deepcopy(self.degrees)
+        stream_copy.times = copy.deepcopy(self.times)
+        stream_copy.EL = copy.deepcopy(self.EL)
         stream_copy.core_property = self.core_property
         
         return stream_copy
@@ -262,6 +263,7 @@ class Stream:
                             "label_u": l["label_u"],
                             "label_v": l["label_v"],
                             }
+                    
                     subs.add_link(new_l)
         
         return subs
@@ -339,13 +341,13 @@ class BipartiteStream(Stream):
     def copy(self):
         stream_copy = BipartiteStream(_fp=self.bip_fp)
         stream_copy.T = self.T
-        stream_copy.V = self.V.copy()
-        stream_copy.W = self.W.copy()
-        stream_copy.E = self.E.copy()
-        stream_copy.I = self.I.copy()
-        stream_copy.degrees = self.degrees.copy()
-        stream_copy.times = self.times.copy()
-        stream_copy.EL = self.EL.copy()
+        stream_copy.V = copy.deepcopy(self.V)
+        stream_copy.W = copy.deepcopy(self.W)
+        stream_copy.E = copy.deepcopy(self.E)
+        stream_copy.I = copy.deepcopy(self.I)
+        stream_copy.degrees = copy.deepcopy(self.degrees)
+        stream_copy.times = copy.deepcopy(self.times)
+        stream_copy.EL = copy.deepcopy(self.EL)
         stream_copy.core_property = self.core_property
         
         return stream_copy
@@ -493,6 +495,8 @@ class BipartiteStream(Stream):
             t_v = TimeNode(l["v"], l["b"], l["e"])
             label_left = set(l["label"]["left"])
             label_right = set(l["label"]["right"])
+            subs.I["left"] = subs.I["left"].union(label_left)
+            subs.I["right"] = subs.I["right"].union(label_right)
 
             cap = list(TimeNodeSet([t_u, t_v]).intersection(subs.W).values())
 
@@ -506,12 +510,10 @@ class BipartiteStream(Stream):
                         "b": u.b,
                         "e": u.e,
                         "label": {
-                            "left": label_left,
-                            "right": label_right
+                            "left": copy.deepcopy(label_left),
+                            "right": copy.deepcopy(label_right)
                         }
                     }
-                    subs.I["left"] = subs.I["left"].union(label_left)
-                    subs.I["right"] = subs.I["right"].union(label_right)
                     subs.add_link(new_l)
         
         return subs

@@ -1,3 +1,5 @@
+import copy
+
 class TimeNode:
     """
         For later refactoring
@@ -228,7 +230,7 @@ class TimeNodeSet:
 
     def copy(self):
         new = TimeNodeSet()
-        new.elements = self.elements.copy()
+        new.elements = copy.deepcopy(self.elements)
         return new
 
     def __len__(self):
