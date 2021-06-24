@@ -53,16 +53,16 @@ class TestStream:
             "e": 5,
             "u": "u",
             "v": "v",
-            "label_u": "abcd",
-            "label_v": "abcd"
+            "label": { "left": set(["a", "b", "c", "d"]),
+                       "right": set(["a","b","c","d"]) }
         },
         {
             "b": 1,
             "e": 3,
             "u": "v",
             "v": "x",
-            "label_u": "abcd",
-            "label_v": "abc"
+            "label": { "left": set(["a", "b", "c", "d"]),
+                       "right": set(["a","b","c"]) }
         }]
 
         assert(sub == expected)

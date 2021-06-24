@@ -5,7 +5,6 @@ import operator
 from lib.errors import *
 import copy
 import ujson as json
-import ipdb
 from operator import itemgetter
 
 class Pattern:
@@ -44,8 +43,8 @@ class Pattern:
         # else:
             # S = (S.E, S.E)
             
-        X1 = [ TimeNode(x["u"], x["b"], x["e"], _label=set(x["label_u"])) for x in S.E if q.issubset(set(x["label_u"]))]
-        X2 = [ TimeNode(x["v"], x["b"], x["e"], _label=set(x["label_v"])) for x in S.E if q.issubset(set(x["label_v"]))]
+        X1 = [ TimeNode(x["u"], x["b"], x["e"], _label=set(x["label"]["left"])) for x in S.E if q.issubset(set(x["label"]["left"]))]
+        X2 = [ TimeNode(x["v"], x["b"], x["e"], _label=set(x["label"]["right"])) for x in S.E if q.issubset(set(x["label"]["right"]))]
         
         X = X1 + X2
         X = TimeNodeSet(X)
@@ -314,9 +313,15 @@ def enum(stream, pattern, excl_list=set(), depth=0, min_support_size=2, parent=s
     # lang = [item for sublist in lang for item in list(sublist) if item not in pattern.elements() ]
     # candidates = set(lang)
     # lang = stream.I
-    top_cand, bot_cand = pattern.minus(stream.I) 
+    if patternClass is BiPattern:
+        top_cand, bot_cand = pattern.minus(stream.I)
+        candidates = [ (x, 0) for x in top_cand if not x in excl_list ] + [ (x, 1) for x in bot_cand if not x in excl_list ]
+    else:
+        candidates = pattern.minus(stream.I)
+        candidates = [ (x, 0) for x in candidates if not x in excl_list ]
+    
     sort_crit = lambda x: len(x)
-    candidates = [ (x, 0) for x in top_cand if not x in excl_list ] + [ (x, 1) for x in bot_cand if not x in excl_list ]
+    # candidates = [ (x, 0) for x in top_cand if not x in excl_list ] + [ (x, 1) for x in bot_cand if not x in excl_list ]
 
     # print(len(pattern.lang), len(pattern.support_set.W), len(pattern.support_set.V), len(pattern.support_set.E))
     # print(len(candidates), depth)

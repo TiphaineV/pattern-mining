@@ -39,8 +39,8 @@ class Stream:
                     "v": e["v"],
                     "b": e["b"],
                     "e": e["e"],
-                    "label_u": list(e["label_u"]),
-                    "label_v": list(e["label_v"])
+                    "label": { "left": list(e["label"]["left"]),
+                        "right": list(e["label"]["right"]) }
                 } for e in self.E ],
             "I": list(self.I)
         }
@@ -102,8 +102,13 @@ class Stream:
         v = l["v"]
         b = l["b"]
         e = l["e"]
-        label_u = l["label_u"]
-        label_v = l["label_v"]
+        # Differentiate depending on pattern vs bipattern class
+        # En fait tout devrait être labels: {"left": [...], "right": ...} pour u et v
+        # la seule chose qui change entre pattern et bipattern, c'est I (et l'overlap ou non entre les labels)
+        # label_u = l["label_u"]
+        # label_v = l["label_v"]
+        label_u = l["label"]["left"]
+        label_v = l["label"]["right"]
 
         self.V.add(u)
         self.V.add(v)
@@ -146,8 +151,8 @@ class Stream:
             v = link["v"]
             b = link["b"]
             e = link["e"]
-            label_u = link["label_u"]
-            label_v = link["label_v"]
+            label_u = link["label"]["left"]
+            label_v = link["label"]["left"]
             
             try:
                 self.degrees[u].append((v, b, 1, label_u))
@@ -176,8 +181,8 @@ class Stream:
         self.I = data["I"]
         
         for link in data["E"]:
-            t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label_u"])
-            t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label_v"])
+            t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label"]["left"])
+            t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label"]["right"])
             self.W.add(t_u)
             self.W.add(t_v)
             self.add_link(link)
@@ -192,8 +197,8 @@ class Stream:
         self.I = data["I"]
         
         for link in data["E"]:
-            t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label_u"])
-            t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label_v"])
+            t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label"]["left"])
+            t_v = TimeNode(link["v"], link["b"], link["e"], _label=link["label"]["right"])
             self.W.add(t_u)
             self.W.add(t_v)
             self.add_link(link)
@@ -260,8 +265,8 @@ class Stream:
                             "v": v.node,
                             "b": u.b,
                             "e": u.e,
-                            "label_u": l["label_u"],
-                            "label_v": l["label_v"],
+                            "label": { "left": set(l["label"]["left"]),
+                                       "right": set(l["label"]["right"]) }
                             }
                     
                     subs.add_link(new_l)
