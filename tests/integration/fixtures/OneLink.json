@@ -11,8 +11,8 @@
             "e": 3,
             "u": "u",
             "v": "v",
-            "label_u": "abc",
-            "label_v": "xyz"
+            "label": { "left": ["a", "b", "c"],
+            	       "right": ["x", "y", "z"]}
         }
 ]
 }

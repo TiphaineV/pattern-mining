@@ -10,21 +10,23 @@
 		"e": 2,
 		"u": "0ef32090550901ead25cb0ea21c4d36b",
 		"v": "92270",
-		"label_u": [
-			"This",
-			"collection",
-			"favorite",
-			"is",
-			"my"
-		],
-		"label_v": [
-			"Carroll,",
-			"a",
-			"and",
-			"diarist",
-			"rock",
-            "collection"
-		]
+		"label": {
+			"left": [
+				"This",
+				"collection",
+				"favorite",
+				"is",
+				"my"
+			],
+			"right": [
+				"Carroll,",
+				"a",
+				"and",
+				"diarist",
+				"rock",
+            			"collection"
+			]
+		}
 	},
     {
         "b": 6,

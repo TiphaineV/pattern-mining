@@ -11,24 +11,24 @@
             "e": 3,
             "u": "u",
             "v": "v",
-            "label_u": "abc",
-            "label_v": "bcd"
+            "label": { "left": ["a", "b", "c"],
+            	       "right": ["b", "c", "d"]}
         },
         {
             "b": 2,
             "e": 3,
             "u": "v",
             "v": "x",
-            "label_u": "abc",
-            "label_v": "bcd"
+            "label": { "left": ["a", "b", "c"],
+            	       "right": ["b", "c", "d"]}
         },
         {
             "b": 2,
             "e": 3,
             "u": "u",
             "v": "x",
-            "label_u": "abc",
-            "label_v": "bcd"
+            "label": { "left": ["a", "b", "c"],
+            	       "right": ["b", "c", "d"]}
         }
 ]
 }

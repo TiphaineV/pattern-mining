@@ -11,16 +11,16 @@
             "e": 3,
             "u": "u",
             "v": "v",
-            "label_u": "abc",
-            "label_v": "abc"
+            "label": { "left": ["a", "b", "c"],
+            	       "right": ["a", "b", "c"]}
         },
         {
             "b": 2,
             "e": 4,
             "u": "v",
             "v": "y",
-            "label_u": "abc",
-            "label_v": "abc"
+            "label": { "left": ["a", "b", "c"],
+            	       "right": ["a", "b", "c"]}
         }
 ]
 }
