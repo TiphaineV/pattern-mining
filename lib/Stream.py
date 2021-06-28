@@ -297,7 +297,7 @@ class BipartiteStream(Stream):
         self.core_property = None
         
         self.bip_fp = _fp
-        self.bipatterns_list = []
+        self.pattern_list = []
         self.EL = set()
         
         # Language
