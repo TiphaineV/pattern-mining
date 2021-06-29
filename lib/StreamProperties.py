@@ -129,7 +129,9 @@ class StreamStarSat(StreamProperty):
             best_neighs = set()
             last_times = {} # {u: -1 for u in s.degrees}
             for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
+                print(neigh)
                 v, t, ev_type = i[0], i[1], i[2]
+                print(t,u,v)
                 # First check if the property is true
                 starsat_is_true = len(neigh) >= THRESHOLD
 

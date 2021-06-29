@@ -5,6 +5,7 @@ import operator
 from lib.errors import *
 import copy
 import ujson as json
+import sys
 from operator import itemgetter
 
 class Pattern:
@@ -225,7 +226,7 @@ def check_patterns(pattern_list):
 
     return unicity and specificity
     
-def load_patterns(filepath, bipartite=False):
+def load_patterns(filepath, bipartite=False, bipatterns=False):
     """
         Load patterns from a previous run, that have been exported in JSON format,
         using Pattern's self.json() method.
@@ -233,9 +234,12 @@ def load_patterns(filepath, bipartite=False):
     
     if bipartite:
         streamClass = BipartiteStream
-        patternClass = BiPattern
     else:
         streamClass = Stream
+
+    if bipatterns:
+        patternClass = BiPattern
+    else:
         patternClass = Pattern
     print(streamClass)
 
@@ -255,6 +259,12 @@ def bipatterns(stream, s=2):
     """
         Enumerates all bipatterns
     """
+
+    # Check that stream can enumerate monopatterns
+    if not stream.bipatterns_flag:
+        raise ValueError("The stream is not formatted for bipattern enumeration. Make sure that the language description (stream.I) is a dictionary containing lists, likes so: {'left': ..., 'right':...}.")
+        sys.exit()
+
     stream.EL = set()
     stream.pattern_list = []
     # S = interior(self, _top, _bot, set())
@@ -270,6 +280,12 @@ def patterns(stream, s=2):
     """
         Enumerates all patterns
     """
+
+    # Check that stream can enumerate monopatterns
+    if not stream.patterns_flag:
+        raise ValueError("The stream is not formatted for pattern enumeration. Make sure that the language description (stream.I) is a single list.")
+        sys.exit()
+
     stream.EL = set()
     excl_list = set()
     stream.pattern_list = []

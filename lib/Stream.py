@@ -20,6 +20,8 @@ class Stream:
         self.EL = set()
         
         self.I = lang
+        self.bipatterns_flag = False
+        self.patterns_flag = False
         
         # Store both degree view and links (times) view,
         # as the optimal view is different depending on the calculation
@@ -179,6 +181,14 @@ class Stream:
         self.W = TimeNodeSet()
         self.E = []
         self.I = data["I"]
+            
+        if "left" in self.I and "right" in self.I and len(self.I) == 2:
+            self.bipatterns_flag = True
+            self.I["left"] = set(self.I["left"])
+            self.I["right"] = set(self.I["right"])
+        else:
+            self.patterns_flag = True
+            self.I = set(self.I)
         
         for link in data["E"]:
             t_u = TimeNode(link["u"], link["b"], link["e"], _label=link["label"]["left"])
@@ -300,13 +310,11 @@ class BipartiteStream(Stream):
         self.pattern_list = []
         self.EL = set()
         
-        # Language
-#         if type(lang) is set:
-#             self.patternClass = Pattern
-#         else:
-#             self.patternClass = BiPattern
+        # Language compatibility
+        self.bipatterns_flag = False
+        self.patterns_flag = False
         
-        self.I = {"left": set(), "right": set()}
+        self.I = set()
         
         # Store both degree view and links (times) view,
         # as the optimal view is different depending on the calculation
@@ -334,7 +342,8 @@ class BipartiteStream(Stream):
                         "right": list(e["label"]["right"])
                     }
                 } for e in self.E ],
-            "I": {"left": list(self.I["left"]), "right": list(self.I["right"])}
+            # "I": {"left": list(self.I["left"]), "right": list(self.I["right"])}
+            "I": list(self.I)
         }
 
         return json_repr
@@ -434,8 +443,14 @@ class BipartiteStream(Stream):
         self.V = {"left": set(data["V"]["left"]), "right": set(data["V"]["right"]) }
         self.W = TimeNodeSet()
         self.I = data["I"]
-        self.I["left"] = set(self.I["left"])
-        self.I["right"] = set(self.I["right"])
+            
+        if "left" in self.I and "right" in self.I and len(self.I) == 2:
+            self.bipatterns_flag = True
+            self.I["left"] = set(self.I["left"])
+            self.I["right"] = set(self.I["right"])
+        else:
+            self.patterns_flag = True
+            self.I = set(data["I"])
         
         self.E = []
         
@@ -451,8 +466,14 @@ class BipartiteStream(Stream):
         self.V = {"left": set(data["V"]["left"]), "right": set(data["V"]["right"]) }
         self.W = TimeNodeSet()
         self.I = data["I"]
-        self.I["left"] = set(self.I["left"])
-        self.I["right"] = set(self.I["right"])
+
+        if "left" in self.I and "right" in self.I and len(self.I) == 2:
+            self.bipatterns_flag = True
+            self.I["left"] = set(self.I["left"])
+            self.I["right"] = set(self.I["right"])
+        else:
+            self.patterns_flag = True
+            self.I = set(data["I"])
         
         self.E = []
         
@@ -484,6 +505,13 @@ class BipartiteStream(Stream):
         subs.W = self.W.intersection(W) 
         # subs.W = TimeNodeSet()
         # subs.W = self.W.intersection(W)
+        
+        if self.bipatterns_flag:
+            subs.I = {"left": set(), "right": set() }
+        
+        if self.patterns_flag:
+            subs.I = set()
+
         subs.E = []
         subs.degrees = { u: [] for u in list(subs.V["left"]) + list(subs.V["right"]) }
         
@@ -500,8 +528,12 @@ class BipartiteStream(Stream):
             t_v = TimeNode(l["v"], l["b"], l["e"])
             label_left = set(l["label"]["left"])
             label_right = set(l["label"]["right"])
-            subs.I["left"] = subs.I["left"].union(label_left)
-            subs.I["right"] = subs.I["right"].union(label_right)
+
+            if self.bipatterns_flag:
+                subs.I["left"] = subs.I["left"].union(label_left)
+                subs.I["right"] = subs.I["right"].union(label_right)
+            if self.patterns_flag:
+                subs.I = subs.I.union(label_left).union(label_right)
 
             cap = list(TimeNodeSet([t_u, t_v]).intersection(subs.W).values())
 
