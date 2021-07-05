@@ -12,25 +12,25 @@ class StreamProperty():
     def p2(self):
         return True
 
-# class BHACore(StreamProperty):
-    # def __init__(self, stream):
-        # super(BHACore, self).__init__(stream)
-        # self.h = 2
-        # self.a = 2
+class BHACore(StreamProperty):
+    def __init__(self, stream):
+        super(BHACore, self).__init__(stream)
+        self.h = 2
+        self.a = 2
         
-    # def p1(self, x, Z1, Z2, pattern): 
-        # subg = self.G.subgraph(Z1.union(Z2))
-        # degree = subg.out_degree(x)
-        # pattern = pattern.issubset(self.G.node[x]["lang"])
+    def p1(self, x, Z1, Z2, pattern): 
+        subg = self.G.subgraph(Z1.union(Z2))
+        degree = subg.out_degree(x)
+        pattern = pattern.issubset(self.G.node[x]["lang"])
         
-        # return degree >= self.h and pattern
+        return degree >= self.h and pattern
         
-    # def p2(self, x, Z1, Z2, pattern):
-        # subg = self.G.subgraph(Z1.union(Z2))
-        # degree = subg.in_degree(x)
-        # pattern = pattern.issubset(self.G.node[x]["lang"])
+    def p2(self, x, Z1, Z2, pattern):
+        subg = self.G.subgraph(Z1.union(Z2))
+        degree = subg.in_degree(x)
+        pattern = pattern.issubset(self.G.node[x]["lang"])
         
-        # return degree >= self.a and pattern
+        return degree >= self.a and pattern
 
 class StreamBHACore(StreamProperty):
     def __init__(self, stream, h=2, a=2):
@@ -40,15 +40,21 @@ class StreamBHACore(StreamProperty):
         # Ensure that BipartiteStream ?
         
     
-    def find_bicore(self, stream, threshold=2):
+    def find_bicore(self, stream):
 
         hubs = TimeNodeSet()
 
         for u in stream.degrees:
+
+            if u in stream.V["left"]:
+                threshold = self.h
+            if u in stream.V["right"]:
+                threshold = self.a
+
             neighbourhood = set()
             last_t = {}
 
-            for v,t,e_type,label in sorted(stream.degrees[u], key=operator.itemgetter(1, 2, -3)):
+            for v,t,e_type,label in sorted(stream.degrees[u], key=operator.itemgetter(1, 2)):
                 if e_type == 1:
                     neighbourhood.add(v)
                     last_t[u] = t
@@ -57,56 +63,64 @@ class StreamBHACore(StreamProperty):
                     if len(neighbourhood) >= threshold:
                         # print(u, len(neighbourhood), last_t[u], t)
                         hubs.add(TimeNode(u, last_t[u], t))
-                        hubs.add(TimeNode(v, last_t[v], t))
+                        # We have no idea about v's neighbourhood.
+                        # hubs.add(TimeNode(v, last_t[v], t))
                     neighbourhood.remove(v)
 
         # print(len(hubs), len(stream.W))
         return stream.substream(hubs, hubs)
 
     def interior(self, s, X=None, Y=None):
-        hubs = self.find_bicore(s, threshold=self.h)
-        authorities = self.find_bicore(hubs, threshold=self.a)
-
-        return authorities
-
-
-    # def interior_bak(self, s, X=None, Y=None):
-        # # Define nodesets
-        # if X is None and Y is None:
-            # X = s.V["left"]
-            # Y = s.V["right"]
-        # hub = TimeNodeSet()
-        # authority = TimeNodeSet()
-            
-        # for k, u in enumerate(s.degrees):
-            # if u in X:
-                # threshold = self.h
-            # else:
-                # threshold = self.a
-                
-            # neigh = set()
-            # last_times = {} # {u: -1 for u in s.degrees}
-            # for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
-                # v, t, ev_type = i[0], i[1], i[2]
-                # # First check if the property is true
-                # bha_is_true = len(neigh) >= threshold
-
-                # if ev_type == 1:
-                    # neigh.add(v)
-                    # last_times[v] = t
-                    # if not bha_is_true:
-                        # # While the property is true (typically, we have degree > THRESHOLD)
-                        # # u remains star, so we should not change the times
-                        # last_times[u] = t
-                # else:
-                    # neigh.remove(v)
-                    # if bha_is_true:
-                        # if u in X:
-                            # hub.add(TimeNode(u, last_times[u], t))
-                        # else:
-                            # authority.add(TimeNode(u, last_times[u], t))
         
-        # return s.substream(hub, authority)
+        core_size = 0
+        old_core_size = -1
+        hubs = s
+
+        while len(self.find_bicore(hubs).W) != old_core_size:
+            hubs = self.find_bicore(hubs)
+            old_core_size = len(hubs.W)
+        # authorities = self.find_bicore(hubs, threshold=self.a)
+
+        return hubs
+
+
+    def interior_bak(self, s, X=None, Y=None):
+        # Define nodesets
+        if X is None and Y is None:
+            X = s.V["left"]
+            Y = s.V["right"]
+        hub = TimeNodeSet()
+        authority = TimeNodeSet()
+            
+        for k, u in enumerate(s.degrees):
+            if u in X:
+                threshold = self.h
+            else:
+                threshold = self.a
+                
+            neigh = set()
+            last_times = {} # {u: -1 for u in s.degrees}
+            for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
+                v, t, ev_type = i[0], i[1], i[2]
+                # First check if the property is true
+                bha_is_true = len(neigh) >= threshold
+
+                if ev_type == 1:
+                    neigh.add(v)
+                    last_times[v] = t
+                    if not bha_is_true:
+                        # While the property is true (typically, we have degree > THRESHOLD)
+                        # u remains star, so we should not change the times
+                        last_times[u] = t
+                else:
+                    neigh.remove(v)
+                    if bha_is_true:
+                        if u in X:
+                            hub.add(TimeNode(u, last_times[u], t))
+                        else:
+                            authority.add(TimeNode(u, last_times[u], t))
+        
+        return s.substream(hub, authority)
         
 class StreamStarSat(StreamProperty):
     
@@ -129,9 +143,7 @@ class StreamStarSat(StreamProperty):
             best_neighs = set()
             last_times = {} # {u: -1 for u in s.degrees}
             for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
-                print(neigh)
                 v, t, ev_type = i[0], i[1], i[2]
-                print(t,u,v)
                 # First check if the property is true
                 starsat_is_true = len(neigh) >= THRESHOLD
 

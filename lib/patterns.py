@@ -8,6 +8,8 @@ import ujson as json
 import sys
 from operator import itemgetter
 
+import networkx as nx
+
 class Pattern:
     """
         Monopattern class
@@ -225,6 +227,15 @@ def check_patterns(pattern_list):
     specificity = all([ len(p[0].lang) >= len(p[1]) for p in pattern_list ])
 
     return unicity and specificity
+
+def check_bha_patterns(stream):
+    check_res = []
+    for i in stream.pattern_list:
+         edges = [frozenset([ x["u"], x["v"] ]) for x in i[0].support_set.E ]
+         g = nx.Graph(edges)
+         deg = [ g.degree(x) >= stream.core_property.h for x in g.nodes() ]
+         check_res.append(all(deg))
+    return all(check_res)
     
 def load_patterns(filepath, bipartite=False, bipatterns=False):
     """
