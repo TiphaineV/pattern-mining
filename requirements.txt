@@ -8,3 +8,4 @@ nltk
 IPython
 snakemake
 seaborn
+networkx
