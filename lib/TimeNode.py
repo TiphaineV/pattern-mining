@@ -58,11 +58,12 @@ class Interval:
         # both i and j *are* intervals (i.e. e >= b, and f >= c)
         # TODO: extend to list of intervals
         # returns both bollean value and intersection (an interval)
+
         b, e = self.b, self.e
         c, f = x.b, x.e
 
         # Disjoint
-        if c >= e or f <= b:
+        if c > e or f < b:
             return False, None
         # Inclusion
         # Replace to use "included" method
@@ -73,14 +74,16 @@ class Interval:
         # intersection
         if (c <= b and f >= b and f <= e) or\
            (b <= c and e >= c and e <= f):
-            return True, Interval(max(b,c), min(e,f))
+                intersect_interval = Interval(max(b,c), min(e,f))
+                # intersect_interval.b != intersect_interval.e:
+                return True, intersect_interval
 
         return False, ()
 
 
     def union(self, x):
         intersects, inter_val = self.intersect(x)
-        if intersects:
+        if intersects and inter_val is not None:
             return Interval(min(self.b, x.b), max(self.e, x.e)) 
         else:
             return self, x

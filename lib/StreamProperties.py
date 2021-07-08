@@ -1,6 +1,6 @@
 from lib.TimeNode import Interval, TimeNode, TimeNodeSet
 from lib.Stream import Stream
-import operator
+from operator import itemgetter
 
 class StreamProperty():
     def __init__(self, stream):
@@ -42,10 +42,13 @@ class StreamBHACore(StreamProperty):
     
     def find_bicore(self, stream):
 
+        # print("<================ bicore")
+        # print(stream)
+
         hubs = TimeNodeSet()
 
         for u in stream.degrees:
-
+            # print(f"Node {u}")
             if u in stream.V["left"]:
                 threshold = self.h
             if u in stream.V["right"]:
@@ -54,29 +57,41 @@ class StreamBHACore(StreamProperty):
             neighbourhood = set()
             last_t = {}
 
-            for v,t,e_type,label in sorted(stream.degrees[u], key=operator.itemgetter(1, 2)):
+            for v,t,e_type,label in sorted(stream.degrees[u], key=itemgetter(1)):
+                # print([(v, t, e_type) for v,t, e_type, label in sorted(stream.degrees[u], key=itemgetter(1))])
+                # print(f"linked with {v,t,e_type}")
                 if e_type == 1:
+                    # print(f"We add {t,v} to the neighbourhood.")
                     neighbourhood.add(v)
                     last_t[u] = t
                     last_t[v] = t
                 elif e_type == -1:
+                    # print(f"{u} has {len(neighbourhood)} neighbours.")
                     if len(neighbourhood) >= threshold:
                         # print(u, len(neighbourhood), last_t[u], t)
+                        # print(f"We add {u} [{last_t[u]}, {t}] to hubs.")
                         hubs.add(TimeNode(u, last_t[u], t))
                         # We have no idea about v's neighbourhood.
                         # hubs.add(TimeNode(v, last_t[v], t))
+                    # print(f"We remove {t, v} from neighbourhood.")
+                    # print(f"{u}")
                     neighbourhood.remove(v)
 
+        # print(str([ x for x in hubs]))
         # print(len(hubs), len(stream.W))
-        return stream.substream(hubs, hubs)
+        subs = stream.substream(hubs, hubs)
+        # print(subs)
+        # print("=========bicore===========/>")
+        return subs
 
     def interior(self, s, X=None, Y=None):
-        
+        # print("Calling INTERIOR") 
         core_size = 0
         old_core_size = -1
         hubs = s
 
         while len(self.find_bicore(hubs).W) != old_core_size:
+            # print("IN LOOP")
             hubs = self.find_bicore(hubs)
             old_core_size = len(hubs.W)
         # authorities = self.find_bicore(hubs, threshold=self.a)
@@ -100,7 +115,7 @@ class StreamBHACore(StreamProperty):
                 
             neigh = set()
             last_times = {} # {u: -1 for u in s.degrees}
-            for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
+            for i in sorted(s.degrees[u], key=itemgetter(1, 2,-3)):
                 v, t, ev_type = i[0], i[1], i[2]
                 # First check if the property is true
                 bha_is_true = len(neigh) >= threshold
@@ -142,7 +157,7 @@ class StreamStarSat(StreamProperty):
             neigh = set()
             best_neighs = set()
             last_times = {} # {u: -1 for u in s.degrees}
-            for i in sorted(s.degrees[u], key=operator.itemgetter(1, 2,-3)):
+            for i in sorted(s.degrees[u], key=itemgetter(1, 2,-3)):
                 v, t, ev_type = i[0], i[1], i[2]
                 # First check if the property is true
                 starsat_is_true = len(neigh) >= THRESHOLD

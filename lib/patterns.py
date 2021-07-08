@@ -30,7 +30,7 @@ class Pattern:
         """
         
         langs = [ self.support_set.label(x) for x in self.support_set.W.values() if len(self.support_set.label(x)) > 0 ]
-        
+
         if langs == []:
             langs = [set()]
         return set.intersection(*langs)
@@ -83,7 +83,7 @@ class Pattern:
         return json_repr
 
     def __str__(self):
-        return f"{self.lang} {self.support_set.W}"
+        return f"{self.lang} {[str(x) for x in self.support_set.W]}"
         
     def __repr__(self):
         return self.__str__()

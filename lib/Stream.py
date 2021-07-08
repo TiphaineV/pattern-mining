@@ -280,6 +280,20 @@ class Stream:
                             }
                     
                     subs.add_link(new_l)
+                else:
+                    intv, val = Interval(u.b, u.e).intersect(Interval(v.b, v.e))
+                    if intv:
+                        new_l = {
+                            "u": u.node,
+                            "v": v.node,
+                            "b": val.b,
+                            "e": val.e,
+                            "label": {
+                                "left": copy.deepcopy(label_left),
+                                "right": copy.deepcopy(label_right)
+                            }
+                        }
+                        subs.add_link(new_l)
         
         return subs
     
@@ -290,7 +304,7 @@ class Stream:
         edges = '\n'.join([f"({x['b']}, {x['e']}, {x['u']}, {x['v']})" for x in self.E ])
         return f"T: {self.T}\n\
 V: {self.V},\n\
-W: {self.W},\n\
+W: {[str(x) for x in self.W]},\n\
 E: {edges}\
         "
     
@@ -503,6 +517,9 @@ class BipartiteStream(Stream):
         subs.V["right"] = set([x.node for x in  W1 if x.node in self.V["right"] ] + [x.node for x in W2 if x.node in self.V["right"] ])
         W = W1.union(W2)
         subs.W = self.W.intersection(W) 
+        # print("subs W")
+        # print([str(x) for x in subs.W])
+        # print("=======")
         # subs.W = TimeNodeSet()
         # subs.W = self.W.intersection(W)
         
@@ -516,6 +533,7 @@ class BipartiteStream(Stream):
         subs.degrees = { u: [] for u in list(subs.V["left"]) + list(subs.V["right"]) }
         
         for l in self.E:
+            # print(f"About {l}...")
             # It is necessary to truncate the link if it only partially
             # intersects with subs.W
 
@@ -536,6 +554,7 @@ class BipartiteStream(Stream):
                 subs.I = subs.I.union(label_left).union(label_right)
 
             cap = list(TimeNodeSet([t_u, t_v]).intersection(subs.W).values())
+            # print(f"Intersection with of [{t_u}, {t_v}] with W: {cap}")
 
             if len(cap) == 2:
                 u, v = cap[0], cap[1]
@@ -552,6 +571,20 @@ class BipartiteStream(Stream):
                         }
                     }
                     subs.add_link(new_l)
+                else:
+                    intv, val = Interval(u.b, u.e).intersect(Interval(v.b, v.e))
+                    if intv:
+                        new_l = {
+                            "u": u.node,
+                            "v": v.node,
+                            "b": val.b,
+                            "e": val.e,
+                            "label": {
+                                "left": copy.deepcopy(label_left),
+                                "right": copy.deepcopy(label_right)
+                            }
+                        }
+                        subs.add_link(new_l)
         
         return subs
     
@@ -562,7 +595,7 @@ class BipartiteStream(Stream):
         edges = '\n'.join([f"({x['b']}, {x['e']}, {x['u']}, {x['v']})" for x in self.E ])
         return f"T: {self.T}\n\
 V: {self.V},\n\
-W: {self.W},\n\
+W: {[str(x) for x in self.W]},\n\
 E: {edges}\
         "
     
